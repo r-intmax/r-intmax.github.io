@@ -2,16 +2,16 @@
 <html>
 <head>
   <script>
+    var div = document.getElementById("myDiv");
     const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).then(function(response){
       response.setHeader("Access-Control-Allow-Origin", "*");
       div.innerHTML = response.status;
       return response.text();
     });
-    const div = document.getElementById("myDiv");
   </script>
 </head>
 <body>
-  <h1>Title</h1>1
+  <h1>Title</h1>12!
   <div id="myDiv"></div>
   <div id="results"></div>
 </body>
