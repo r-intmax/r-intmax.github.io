@@ -2,9 +2,7 @@
 <html>
 <head>
   <script>
-    const html = fetch(
-      `https:\/\/cn.bing.com/search?q=$a`
-    ).next(function(response){
+    const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).next(function(response){
       response.setHeader("Access-Control-Allow-Origin", "*");
       return response.status;
       return response.text();
@@ -12,15 +10,9 @@
     const div = document.getElementById("myDiv");
     div.innerHTML = html;
   </script>
-  <title>简易搜索</title>
 </head>
 <body>
-  <h1>简易搜索</h1>
-  <form action=#>
-    <input type="text" name="keyword" placeholder="请输入关键词">
-    <input type="number" name="pages" placeholder="请输入要搜索的页数">
-    12
-  </form>
+  <h1>Title</h1>12
   <div id="myDiv"></div>
   <div id="results"></div>
 </body>
