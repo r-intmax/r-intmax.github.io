@@ -1,16 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <script>
+    const html = fetch(
+      `https://cn.bing.com/search?q=$a`
+    ).next(function(response){
+      response.setHeader("Access-Control-Allow-Origin", "*");
+      return response.text();
+    });
+    const div = document.getElementById("myDiv");
+    div.innerHTML = html;
+  </script>
   <title>简易搜索</title>
 </head>
 <body>
   <h1>简易搜索</h1>
-  <form action="search.js">
+  <form action=#>
     <input type="text" name="keyword" placeholder="请输入关键词">
-    <input type="number" name="pages" placeholder="请输入要搜索的页数">
-    <input type="submit" value="搜索">
+    <input type="number" name="pages" placeholder="请输入要搜索的页数">   
   </form>
-
+  <div id="myDiv"></div>
   <div id="results"></div>
 </body>
 </html>
