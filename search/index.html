@@ -2,6 +2,15 @@
 <html>
 <head>
   <script>
+function f()
+    const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).then(function(response){
+      response.setHeader("Access-Control-Allow-Origin", "*");
+      document.getElementById("demo").innerHTML=response.status;
+      return response.text();
+    });
+}
+</script>
+  <script>
     var div = document.getElementById("myDiv");
     div.innerHTML = "fuck";
     const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).then(function(response){
@@ -13,7 +22,8 @@
 </head>
 <body>
   <h1>Title</h1>1k
-  <div id="myDiv"></div>
+  <button type="button" onclick="f()">f</button>
+  <div id="demo"></div>
   <div id="results"></div>
 </body>
 </html>
