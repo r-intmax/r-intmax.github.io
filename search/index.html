@@ -1,29 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <title>简易搜索</title>
   <script>
-function f()
-    const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).then(function(response){
-      response.setHeader("Access-Control-Allow-Origin", "*");
-      document.getElementById("demo").innerHTML=response.status;
-      return response.text();
-    });
+	function get_info() {
+	  const keyword = document.querySelector('input[name=keyword]').value;
+	  const pages = parseInt(document.querySelector('input[name=pages]').value);
+	  
+	  // 创建一个唯一的回调函数名称
+	  const callbackName = `jsonpCallback_${Math.random()}`;
+	  
+	  // 构建 JSONP 查询字符串
+	  const query = {
+		q: keyword,
+		first: 1, // 开始查询的第一条结果
+		callback: callbackName,
+	  };
+	  
+	  // 创建一个 script 元素来发起 JSONP 请求
+	  const script = document.createElement('script');
+	  script.src = `https://cn.bing.com/search?${new URLSearchParams(query)}`;
+	  script.async = true;
+	  
+	  // 定义回调函数来处理服务器响应
+	  window[callbackName] = function(data) {
+		console.log(data);
+		
+		// 逐页处理结果
+		for (let i = 1; i <= pages; i++) {
+		  // 使用 setTimeout 来控制请求速率，避免触发反爬虫机制
+		  setTimeout(() => {
+			query.first = i * 10;
+			script.src = `https://cn.bing.com/search?${new URLSearchParams(query)}`;
+			document.body.appendChild(script);
+		  }, 500);
+		}
+	  };
+  
+  // 将 script 添加到 DOM 中以发起请求
+  document.body.appendChild(script);
 }
-</script>
-  <script>
-    var div = document.getElementById("myDiv");
-    div.innerHTML = "fuck";
-    const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).then(function(response){
-      response.setHeader("Access-Control-Allow-Origin", "*");
-      //div.innerHTML = response.status;
-      return response.text();
-    });
   </script>
 </head>
 <body>
-  <h1>Title</h1>1k
-  <button type="button" onclick="f()">f</button>
-  <div id="demo"></div>
+  <h1>简易搜索</h1>
+  <form action="#">
+    <input type="text" name="keyword" placeholder="请输入关键词">
+    <input type="number" name="pages" placeholder="请输入要搜索的页数">
+    <button type="button" onclick="get_info()">搜索</button>
+  </form>
   <div id="results"></div>
 </body>
 </html>
