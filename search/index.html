@@ -6,6 +6,7 @@
       `https://cn.bing.com/search?q=$a`
     ).next(function(response){
       response.setHeader("Access-Control-Allow-Origin", "*");
+      return response.status;
       return response.text();
     });
     const div = document.getElementById("myDiv");
