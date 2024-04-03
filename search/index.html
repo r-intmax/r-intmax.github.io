@@ -4,15 +4,14 @@
   <script>
     const html = fetch(`https:\/\/cn.bing.com/search?q=$a`).then(function(response){
       response.setHeader("Access-Control-Allow-Origin", "*");
-      return response.status;
+      div.innerHTML = response.status;
       return response.text();
     });
     const div = document.getElementById("myDiv");
-    div.innerHTML = html;
   </script>
 </head>
 <body>
-  <h1>Title</h1>12
+  <h1>Title</h1>1
   <div id="myDiv"></div>
   <div id="results"></div>
 </body>
