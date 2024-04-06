@@ -1,0 +1,41 @@
+<script>
+
+var a = 1;
+
+function callback_function(response){a = 2;}
+
+var script = document.createElement('script');
+script.src = 'http://rintmax.dns.army:114/example.json?callback=callback_function';
+document.head.appendChild(script);
+setTimeout(() => {
+	if(a == 2){
+		document.getElementById('success').innerHTML = "连接成功";
+		document.getElementById('link').innerHTML = "直接访问";
+		document.getElementById('warning').innerHTML = "请不要在非浏览器的手机应用(例如微信)点击上方链接，请将链接 <strong>http://rintmax.dns.army:114/index.html</strong> 复制到浏览器中访问";
+	}else{
+		document.getElementById('failed').innerHTML = "与辅助服务器建立连接失败！若需连接请联系管理员";
+	}
+}, 10000);
+
+const deadline = new Date(new Date().getTime() + 10 * 1000);
+
+const timer = setInterval(() => {
+    const now = new Date().getTime();
+    const remainingTime = deadline - now;
+    const seconds = Math.floor(remainingTime / 1000);
+    document.getElementById('seconds').innerHTML = "正在与辅助服务器建立连接，请稍等" + seconds + "秒";
+    if (seconds < 0) {
+		document.getElementById('seconds').innerHTML = "";
+        clearInterval(timer);
+    }
+}, 1000);
+
+</script>
+
+<div id="response">
+<h2><div id="seconds"></div></h2>
+<h2 style="color: red;" id="failed"></h2>
+<h2 id="success"></h2>
+<a href="http://rintmax.dns.army:114/index.html" id="link"></a><br><br>
+<p id="warning"></p>
+</div>
