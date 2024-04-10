@@ -12,12 +12,12 @@
 目前先把我的哲学理论(如果我愿意且有时间搞的话)、部分言论、对某些领域的个人见解会搬到这里。搬运至少也要几天吧。  
 本沙盒现在以及以后只会出现<red>纯文本、类xml文字</red>，图片我会尽量少放，视频绝不放。
 ## 浏览本沙盒
-[https://r-intmax.github.io/pages/WeChat.html](微信言论)  
-[https://r-intmax.github.io/pages/compression_paper.html]([水]优化算法“论文”手稿) 
+[微信言论](/pages/WeChat.html)  
+[[水]优化算法“论文”手稿](/pages/compression_paper.html) 
 注：写“论文”和研究完全是两回事，写论文还要看经验论，有固定的模板可以套，我真的写不到那么多字，每个小节真的全靠gpt。
 事实上也应该是这么做，自己先分层，把每一层写简短的几行字，写那么多字难道有任何实际意义？
-[https://r-intmax.github.io/pages/b-x.html](b-x层级表)
-## [https://r-intmax.github.io/pages/subsidiary_server_entry.html"](连接到辅助服务器)
+[b-x层级表](/pages/b-x.html)
+## [连接到辅助服务器"](/pages/subsidiary_server_entry.html)
 
 
 
