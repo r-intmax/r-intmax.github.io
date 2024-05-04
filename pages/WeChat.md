@@ -18,7 +18,7 @@ mc? 那是什么? 好吃吗?
 ```cpp
 // Copyright Epic Games.Inc All Rights Reserved
 #pragma once
-#include "CoreMinimal.h*
+#include "CoreMinimal.h"
 #include "UObject/ObjectMacros.h"
 #include "Engine/Light.h"
 #include
