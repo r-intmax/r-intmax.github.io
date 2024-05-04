@@ -1,6 +1,6 @@
 <style>red{color: red;}</style>
 # R_2147483647欢迎您
-本页最后更新时间 24/05/05 06:05 UTC+8
+本页最后更新时间 24/05/05 06:43 UTC+8
 
 <details><summary>沙盒简介</summary>
 这是一个沙盒空间。<br>
@@ -23,7 +23,6 @@
 事实上也应该是这么做，自己先分层，把每一层写简短的几行字，写那么多字难道有任何实际意义？</details><br>
 [b-x层级表](/pages/b-x)
 ## [连接到辅助服务器](/pages/subsidiary_server_entry.html)
-
-
+<br><br><br>
 留言请直接向<red> g3c215@outlook.com </red>发送。
 
