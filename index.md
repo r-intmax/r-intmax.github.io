@@ -20,9 +20,11 @@
 [\[水\]优化算法“论文”手稿](/pages/compression_paper) 
 <details><summary>备注</summary>
 写“论文”和研究完全是两回事，写论文还要看经验论，有固定的模板可以套，我真的写不到那么多字，每个小节真的全靠gpt。
-事实上也应该是这么做，自己先分层，把每一层写简短的几行字，写那么多字难道有任何实际意义？</details><br>
+事实上也应该是这么做，自己先分层，把每一层写简短的几行字，写那么多字难道有任何实际意义？</details>
+
 [b-x层级表](/pages/b-x)  
-[b-x理论](/pages/b-x_outline)
+[b-x理论](/pages/b-x_outline)  
+[\[水\]b-x申报书](/pages/b-x_watered_paper)  
 
 ## [连接到辅助服务器](/pages/subsidiary_server_entry.html)
 <br><br><br>
