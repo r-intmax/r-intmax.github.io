@@ -25,6 +25,7 @@
 [b-x层级表](/pages/b-x)  
 [b-x理论](/pages/b-x_outline)  
 [\[水\]b-x申报书](/pages/b-x_watered_paper)  
+[\[水\]金融雏鹰](/pages/co_ltd)  
 
 ## [连接到辅助服务器](/pages/subsidiary_server_entry.html)
 <br><br><br>
