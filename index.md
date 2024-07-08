@@ -8,6 +8,7 @@
 
 [b-x理论](/pages/b-x_outline)  
 [组合学](/pages/combinatorics) 定义集暂定公开
+[言葉](/pages/sayings)
 
 <br><br><br>
 留言请直接向<red> g3c215@outlook.com </red>发送。
