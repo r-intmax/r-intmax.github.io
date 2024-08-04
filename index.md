@@ -12,8 +12,8 @@
 
 <br><br><br>
 ## 评论
-开通留言的目的是针对本站错误的内容加以系统性、有实证依据批驳，而不是无依据、无目的的针对个人性的灌水。
-符合后者的任何评论将被后台删除。
+开通留言的目的是针对本站错误的内容加以<red>系统性、有实证依据</red>批驳，而不是<red>无依据、无目的的针对个人性</red>的灌水。
+符合<red>后者</red>的任何评论将被后台<red>删除</red>。
 <div id="gitalk-container"></div>
 <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
 <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
