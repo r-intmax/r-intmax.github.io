@@ -1,6 +1,6 @@
 <style>red{color: red;}</style>
 
-本页最后更新时间 24/07/08 13:52 UTC+8
+本页最后更新时间 24/08/04 11:20 UTC+8
 
 [回到旧版](pages/old)
 
@@ -12,18 +12,19 @@
 
 <br><br><br>
 ## 评论
-<div id="container"></div>
-<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
-<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<div id="gitalk-container"></div>
+<link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css">
+<script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
 <script>
-var gitment = new Gitment({
-id: 'location.href',
-owner: 'r-intmax',
-repo: 'r-intmax.github.io',
-oauth: {
-    client_id: 'Ov23licSxFdK9YLP1pwj',
-    client_secret: 'fdcfee462fdeb5cc67050dfd7b964544cffd6a52',
-},
+var gitalk = new Gitalk({
+  clientID: 'Ov23licSxFdK9YLP1pwj',
+  clientSecret: 'fdcfee462fdeb5cc67050dfd7b964544cffd6a52',
+  repo: 'r-intmax.github.io',
+  owner: 'r-intmax',
+  admin: ['r-intmax'],
+  title: 'comments',
+  distractionFreeMode: false
 })
-gitment.render('container')
+
+gitalk.render('gitalk-container')
 </script>
