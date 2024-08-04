@@ -1,5 +1,5 @@
 <style>red{color: red;}</style>
-# R_2147483647欢迎您
+# r-intmax欢迎您
 此页为旧版主页.  
 
 <details><summary>沙盒简介</summary>
@@ -23,11 +23,11 @@
 事实上也应该是这么做，自己先分层，把每一层写简短的几行字，写那么多字难道有任何实际意义？</details>
 
 [b-x层级表](/pages/old/b-x)  
-[b-x理论](/pages/b-x_outline)  
+[b-x理论](/pages/old/b-x_outline)  
 [\[水\]b-x申报书](/pages/old/b-x_watered_paper)  
 [\[水\]金融雏鹰](/pages/old/co_ltd)  
 
-## [连接到辅助服务器](/pages/old/subsidiary_server_entry.html)
+## [连接到辅助服务器](/pages/old/subsidiary_server_entry.md)
 <br><br><br>
-留言请直接向<red> g3c215@outlook.com </red>发送。
+留言请在<red>新主页</red>发送。
 
