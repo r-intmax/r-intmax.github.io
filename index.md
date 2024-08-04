@@ -11,5 +11,19 @@
 [言葉](/pages/sayings)
 
 <br><br><br>
-留言请直接向<red> g3c215@outlook.com </red>发送。
-
+## 评论
+<div id="container"></div>
+<link rel="stylesheet" href="https://imsun.github.io/gitment/style/default.css">
+<script src="https://imsun.github.io/gitment/dist/gitment.browser.js"></script>
+<script>
+var gitment = new Gitment({
+id: 'location.href',
+owner: 'r-intmax',
+repo: 'r-intmax.github.io',
+oauth: {
+    client_id: 'Ov23licSxFdK9YLP1pwj',
+    client_secret: 'fdcfee462fdeb5cc67050dfd7b964544cffd6a52',
+},
+})
+gitment.render('container')
+</script>
