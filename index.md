@@ -1,14 +1,13 @@
 <style>red{color: red;}</style>
 
-本页最后更新时间 24/08/04 12:04 UTC+8
-
-[回到旧版](pages/old)
+本页最后更新时间 24/08/17 18:04 UTC+8
 
 ## 概览
-
 [b-x理论](/pages/b-x_outline)  
 [组合学](/pages/combinatorics) 定义集暂定公开  
-[言葉](/pages/sayings)
+
+## 便利下载链接
+[硬件模拟软件](https://wwb.lanzouo.com/iMhWG254kxqb)  
 
 <br><br><br>
 ## 评论
