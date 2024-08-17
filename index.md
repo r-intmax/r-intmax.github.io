@@ -8,6 +8,8 @@
 
 ## 便利下载链接
 [硬件模拟软件](https://wwb.lanzouo.com/iMhWG254kxqb)  
+[几何画板](https://wwpa.lanzouo.com/iyEV20ipu4sb)  
+[废弃小项目](https://wwpa.lanzouo.com/b00crgci3a) <red>密码: 1023</red>  
 
 <br><br><br>
 ## 评论
