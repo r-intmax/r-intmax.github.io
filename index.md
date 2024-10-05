@@ -6,11 +6,6 @@
 [b-x理论](/pages/b-x_outline)  
 [组合学](/pages/combinatorics) 定义集暂定公开  
 
-## 便利下载链接
-[硬件模拟软件](https://wwb.lanzouo.com/iMhWG254kxqb)  
-[几何画板](https://wwpa.lanzouo.com/iyEV20ipu4sb)  
-[废弃小项目](https://wwpa.lanzouo.com/b00crgci3a) <red>密码: 1023</red>  
-
 <br><br><br>
 ## 评论
 开通留言的目的是针对本站错误的内容加以<red>系统性、有实证依据</red>批驳，而不是<red>无依据、无目的的针对个人性</red>的灌水。
