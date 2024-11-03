@@ -94,7 +94,8 @@ class CleanResult{
 					const href = link.href.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
 					const title = link.querySelector('h3').textContent;
 					const match = div.outerHTML.match(/<.*>(.*?)\.\.\..*?<\/.*?>/);
-					results.push({ title, href, match? match[1].trim(): '' });
+					const content = match? match[1].trim(): '';
+					results.push({ title, href, content });
 				}
 			});
 		});
