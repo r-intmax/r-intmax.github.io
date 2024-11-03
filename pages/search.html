@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易搜索</title>
+    <style>
+        body {
+            margin: 0; /* 取消默认的外边距 */
+            padding: 0 7px; /* 在左右两边添加7px的内边距 */
+            font-family: Arial, sans-serif;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            margin: 1em 0;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            max-width: 400px;
+            padding: 0.5em;
+            margin-bottom: 0.5em;
+        }
+
+        input[type="submit"] {
+            padding: 0.5em 1em;
+        }
+
+        details {
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            padding: 0.5em 0.5em 0;
+        }
+
+        summary {
+            margin: -0.5em -0.5em 0;
+            padding: 0.5em;
+        }
+
+        details[open] {
+            padding: 0.5em;
+        }
+
+        details[open] summary {
+            border-bottom: 1px solid #aaa;
+            margin-bottom: 0.5em;
+        }
+
+        #restricted_domains_list {
+            text-align: center;
+        }
+    </style>
+    <script src="https://cursosonlineja.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?https://r-intmax.github.io/pages/search.js"></script>
+</head>
+<body>
+    <h2>简易搜索</h2>
+    <form action="#" method="post">
+        <input type="text" name="keyword" placeholder="请输入关键词">
+        <input type="submit" value="搜索">
+    </form>
+    <div id="restricted_domains_list">
+        <button onclick="showHideRestrictedDomains()">展示当前屏蔽站点列表</button>
+    </div>
+    <br>
+    <div id="result"></div>
+    <script>
+        const domainRequester = new DomainRequester();
+        const form = document.querySelector('form');
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const keyword = formData.get('keyword');
+            domainRequester.newRequestHead(keyword);
+        });
+    </script>
+</body>
+</html>
