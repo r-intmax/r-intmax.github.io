@@ -90,8 +90,8 @@ class CleanResult{
 			if (link.querySelector('h3')) {
 				const href = link.href.substr(100, 100);
 				const title = link.querySelector('h3').textContent;
-				const match = div.outerHTML.match(/<span>(.*?)\.\.\..*?<\/span>/);
-				const content = match? match[1].trim(): '';
+				const match = div.outerHTML.match(/<span>(?!翻译此页)(.*?)\.\.\..*?<\/span>/);
+				const content = match? match[1].replace(/<[^>]*>/g, '').trim(): '';
 				results.push({ title, href, content });
 			}
 		});
