@@ -81,7 +81,7 @@ class CleanResult{
 	extractGoogleMirrorResults(html) {
 		const results = [];
 
-		const mainDiv = new DOMParser().parseFromString(html, "text/html").getElementById('main');
+		const mainDiv = new DOMParser().parseFromString(html, "text/html").getElementById('rso');
 		const childDivs = Array.from(mainDiv.children);
 
 		console.log(childDivs);
