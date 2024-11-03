@@ -158,9 +158,8 @@ class DomainRequester {
         this.resultElement.innerHTML += '<h2>加载中...</h2>';	
         
         const xhr = new XMLHttpRequest();
-		xhr.open('GET', `https://cursosonlineja.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?https://www.google.com/search?q=${keyword}+${getCookie("restricted_domains")}&start=${pages}`);
-        console.log(`https://www.google.com/search?q=${keyword}+${getCookie("restricted_domains")}&start=${pages}`);
-		
+	xhr.open('GET', `https://cursosonlineja.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?https://www.google.com/search?q=${keyword}+${getCookie("restricted_domains")}&start=${pages}`);
+
         xhr.onload = () => {
             const result = xhr.responseText;
             const [updatedDomainList, info] = new CleanResult().resultPhrase(keyword, result, this.domainList);
