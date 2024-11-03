@@ -86,12 +86,14 @@ class CleanResult{
 		const divsWithH3 = childDivs.filter(child => {
 			return child.querySelector('h3') !== null;
 		});
+
+		console.log(divsWithH3);
 	
 		divsWithH3.forEach(div => {
 			const links = Array.from(div.getElementsByTagName('a'));
 			let href = "", title = "", content = "";
 			links.forEach(link => {
-				if (link.querySelector('h3')) {
+				if (link.querySelector('h3') && link.href.match(/.*?q=(.*)/)) {
 					href = link.href.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
 					title = link.querySelector('h3').textContent;
 				}
