@@ -1,4 +1,3 @@
-
 var document = window.document;
 
 function getCookie(name) {
