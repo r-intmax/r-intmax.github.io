@@ -27,7 +27,7 @@ function updateCookie(action, domain) {
 
 var shield_context = {};
 
-function shield(domain){
+function shield(domain) {
 	shield_context[domain] = document.getElementById(domain).innerHTML;
 	document.getElementById(domain).innerHTML = '<button onclick="unshield(`' + domain + '`)"><svg style="width: 1em; height: 1em;" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 10L9 22L4 17" stroke="#00C853" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>已屏蔽' + domain + '</button><br><br>';
 	if(getCookie("restricted_domains").indexOf('-site:' + domain) == -1){
@@ -105,7 +105,7 @@ class CleanResult{
 		return results;
 	}
 
-	resultPhrase(keyword, html, domains){
+	resultPhrase(keyword, html, domains) {
 		const shield_text = (text) => ' <button onclick="shield(`' + text + '`)"><svg style="width: 1em; height: 1em;" width="100" height="100" viewBox="0 0 100 100"> <circle cx="50" cy="50" r="45" fill="white" stroke="red" stroke-width="10" /> <line x1="20" y1="20" x2="80" y2="80" stroke="red" stroke-width="10" /> </svg>屏蔽' + text + "</button><br>";
 		const replace = (text) => text.replace(/</g, "&lt;").replace(/>/g, '&gt;');
 		
