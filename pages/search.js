@@ -1,4 +1,4 @@
-//服务器用户数据加载未完成
+
 var document = window.document;
 
 function getCookie(name) {
