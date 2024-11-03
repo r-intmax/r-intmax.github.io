@@ -80,27 +80,21 @@ class CleanResult{
 
 	extractGoogleMirrorResults(html) {
 		const results = [];
-
+		
 		const mainDiv = new DOMParser().parseFromString(html, "text/html").getElementById('rso');
 		const childDivs = Array.from(mainDiv.children);
-
-		console.log(childDivs);
-		console.log(mainDiv);
-	
+		
 		childDivs.forEach(div => {
-			const links = Array.from(div.getElementsByTagName('a'));
-			links.forEach(link => {
-				if (link.querySelector('h3') && link.href.match(/.*?q=(.*)/)) {
-					console.log(link.href);
-					const href = link.href.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
-					const title = link.querySelector('h3').textContent;
-					const match = div.outerHTML.match(/<.*>(.*?)\.\.\..*?<\/.*?>/);
-					const content = match? match[1].trim(): '';
-					results.push({ title, href, content });
-				}
-			});
+			const link = Array.from(div.getElementsByTagName('a'))[0];
+			console.log(link.href);
+			if (link.querySelector('h3')) {
+				const href = link.href.substr(100, 100);
+				const title = link.querySelector('h3').textContent;
+				const match = div.outerHTML.match(/<.*>(.*?)\.\.\..*?<\/.*?>/);
+				const content = match? match[1].trim(): '';
+				results.push({ title, href, content });
+			}
 		});
-		console.log(results);
 		return results;
 	}
 
