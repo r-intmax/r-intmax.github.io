@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>简易搜索</title>
+    <meta name="viewport" content="initial-scale=1.0">
     <script src="/pages/search.js"></script>
     <link rel="stylesheet" href="/pages/search.css">
 </head>
@@ -19,6 +20,14 @@
     <br>
     <div id="result"></div>
     <script>
+        function updateViewport() {
+            const viewport = document.querySelector("meta[name=viewport]");
+            const width = window.innerWidth;
+            viewport.setAttribute("content", "width=" + width + ", initial-scale=1.0");
+        }
+        window.addEventListener("resize", updateViewport);
+        window.addEventListener("load", updateViewport);
+        
         const domainRequester = new DomainRequester();
         const form = document.querySelector('form');
         form.addEventListener('submit', (event) => {
