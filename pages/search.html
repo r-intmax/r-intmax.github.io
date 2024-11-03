@@ -192,7 +192,7 @@ class CleanResult{
 		const shield_text = (text) => ' <button onclick="shield(`' + text + '`)"><svg style="width: 1em; height: 1em;" width="100" height="100" viewBox="0 0 100 100"> <circle cx="50" cy="50" r="45" fill="white" stroke="red" stroke-width="10" /> <line x1="20" y1="20" x2="80" y2="80" stroke="red" stroke-width="10" /> </svg>屏蔽' + text + "</button><br>";
 		const replace = (text) => text.replace(/</g, "&lt;").replace(/>/g, '&gt;');
 		
-		var retstr = "<h4>\"" + keyword + "\"的搜索结果:</h4>";
+		var ret_str = "<h4>\"" + keyword + "\"的搜索结果:</h4>";
 		
 		this.extractGoogleMirrorResults(html).forEach(result => {
 			const title = replace(result.title);
@@ -206,9 +206,9 @@ class CleanResult{
 			}
 		});
 		Object.entries(domains).forEach(([domain, results]) => {
-			retstr += '<div id="' + domain + '">' + results[0] + (results.length == 1 ? "<br>" : "<details><summary>更多来自" + domain + "的结果</summary>" + [...results.slice(1)].join("<br>") + "<br><a href=\"https://cn.bing.com/search?q=" + keyword + "+site:" + domain + "\" target=\"_blank\">更多来自" + domain + "的结果</a></details><br>" ) + '</div>';
+			ret_str += '<div id="' + domain + '">' + results[0] + (results.length == 1 ? "<br>" : "<details><summary>更多来自" + domain + "的结果</summary>" + [...results.slice(1)].join("<br>") + "<br><a href=\"https://cn.bing.com/search?q=" + keyword + "+site:" + domain + "\" target=\"_blank\">更多来自" + domain + "的结果</a></details><br>" ) + '</div>';
 		});
-		return [domains, retstr + '<div style="margin-top: 20px;"><button type="button" style="background-color: #007bff; color: #fff; padding: 10px; width: 100%; border: none; border-radius: 5px; cursor: pointer;" onclick="domainRequester.newPage()">下一页</button></div>'];
+		return [domains, ret_str + '<div style="margin-top: 20px;"><button type="button" style="background-color: #007bff; color: #fff; padding: 10px; width: 100%; border: none; border-radius: 5px; cursor: pointer;" onclick="domainRequester.newPage()">下一页</button></div>'];
 	}
 
 };
