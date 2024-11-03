@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>简易搜索</title>
     <script src="/pages/search.js"></script>
     <link rel="stylesheet" href="/pages/search.css">
@@ -28,6 +27,14 @@
             const keyword = formData.get('keyword');
             domainRequester.newRequestHead(keyword);
         });
+        
+        const currentUrl = window.location.href;
+        const match = currentUrl.match(/(^|[?&])q=([^&]*)$/);
+        
+        if (match) {
+            const keywordFromUrl = match[2];
+            domainRequester.newRequestHead(decodeURIComponent(keywordFromUrl));
+        }  
     </script>
 </body>
 </html>
