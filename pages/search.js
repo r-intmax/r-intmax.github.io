@@ -93,8 +93,9 @@ class CleanResult{
 			const links = Array.from(div.getElementsByTagName('a'));
 			let href = "", title = "", content = "";
 			links.forEach(link => {
-				if (link.querySelector('h3') && link.href.match(/.*?q=(.*)/)) {
-					href = link.href.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
+				if (link.querySelector('h3')) {
+					console.log(link.href);
+					href = link.href;//.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
 					title = link.querySelector('h3').textContent;
 				}
 			});
