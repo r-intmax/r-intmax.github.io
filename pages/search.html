@@ -20,13 +20,25 @@
     <br>
     <div id="result"></div>
     <script>
-        function updateViewport() {
+        const currentUrl = window.location.href;
+        const match = currentUrl.match(/(^|[?&])q=([^&]*)$/);
+        
+        if (match) {
+            const keywordFromUrl = match[2];
+            domainRequester.newRequestHead(decodeURIComponent(keywordFromUrl));
+        }  
+        
+        function setViewportBasedOnUrl() {
             const viewport = document.querySelector("meta[name=viewport]");
-            const width = window.innerWidth;
-            viewport.setAttribute("content", "width=" + width + ", initial-scale=1.0");
+            const urlParams = currentUrl.match(/.*\?ua=mobile.*/);
+
+            if (urlParams) {
+                viewport.setAttribute("content", "width=400, initial-scale=1.0");
+            } else {
+                viewport.setAttribute("content", "width=device-width, initial-scale=1.0");
+            }
         }
-        window.addEventListener("resize", updateViewport);
-        window.addEventListener("load", updateViewport);
+        window.addEventListener("load", setViewportBasedOnUrl);
         
         const domainRequester = new DomainRequester();
         const form = document.querySelector('form');
@@ -36,14 +48,6 @@
             const keyword = formData.get('keyword');
             domainRequester.newRequestHead(keyword);
         });
-        
-        const currentUrl = window.location.href;
-        const match = currentUrl.match(/(^|[?&])q=([^&]*)$/);
-        
-        if (match) {
-            const keywordFromUrl = match[2];
-            domainRequester.newRequestHead(decodeURIComponent(keywordFromUrl));
-        }  
     </script>
 </body>
 </html>
