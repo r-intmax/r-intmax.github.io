@@ -161,7 +161,7 @@ class DomainRequester {
         };
 		
         xhr.onerror = () => this.resultElement.innerHTML = `<h2 style="color: red;">网络连接中断, 请稍后重试</h2>`;
-        xhr.timeout = 6000;
+        xhr.timeout = 25000;
         xhr.ontimeout = () => this.resultElement.innerHTML = `<h2 style="color: red;">请求超时, 请稍后重试</h2>`;
         
         xhr.send();
