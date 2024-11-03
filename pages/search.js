@@ -83,28 +83,22 @@ class CleanResult{
 
 		const mainDiv = new DOMParser().parseFromString(html, "text/html").getElementById('main');
 		const childDivs = Array.from(mainDiv.children);
-		const divsWithH3 = childDivs.filter(child => {
-			return child.querySelector('h3') !== null;
-		});
 
-		console.log(divsWithH3);
+		console.log(childDivs);
 	
-		divsWithH3.forEach(div => {
+		childDivs.forEach(div => {
 			const links = Array.from(div.getElementsByTagName('a'));
-			let href = "", title = "", content = "";
 			links.forEach(link => {
-				if (link.querySelector('h3')) {
+				if (link.querySelector('h3') && link.href.match(/.*?q=(.*)/)) {
 					console.log(link.href);
-					href = link.href;//.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
-					title = link.querySelector('h3').textContent;
+					const href = link.href.match(/.*?q=(.*)/)[1].replace(/:\//g, '://');
+					const title = link.querySelector('h3').textContent;
+					const match = div.outerHTML.match(/<.*>(.*?)\.\.\..*?<\/.*?>/);
+					results.push({ title, href, match? match[1].trim(): '' });
 				}
 			});
-			const match = div.outerHTML.match(/<.*>(.*?)\.\.\..*?<\/.*?>/);
-			if (match) {
-				content = match[1].trim();
-			}
-			results.push({ title, href, content });
 		});
+		console.log(results);
 		return results;
 	}
 
