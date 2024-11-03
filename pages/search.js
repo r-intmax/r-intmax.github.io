@@ -85,6 +85,7 @@ class CleanResult{
 		const childDivs = Array.from(mainDiv.children);
 
 		console.log(childDivs);
+		console.log(mainDiv);
 	
 		childDivs.forEach(div => {
 			const links = Array.from(div.getElementsByTagName('a'));
@@ -105,9 +106,9 @@ class CleanResult{
 
 	resultPhrase(keyword, html, domains) {
 		const shield_text = (text) => ' <button onclick="shield(`' + text + '`)"><svg style="width: 1em; height: 1em;" width="100" height="100" viewBox="0 0 100 100"> <circle cx="50" cy="50" r="45" fill="white" stroke="red" stroke-width="10" /> <line x1="20" y1="20" x2="80" y2="80" stroke="red" stroke-width="10" /> </svg>屏蔽' + text + "</button><br>";
-		const replace = (text) => text.replace(/</g, "&lt;").replace(/>/g, '&gt;');
+		const replace = (text) => text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
 		
-		let retstr = "<h4>\"" + keyword + "\"的搜索结果:</h4>";
+		let retstr = `<h4>"${keyword}"的搜索结果:</h4>`;
 		
 		this.extractGoogleMirrorResults(html).forEach(result => {
 			const title = replace(result.title);
