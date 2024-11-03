@@ -93,8 +93,6 @@ class CleanResult{
 				const match = div.outerHTML.match(/<.*>(.*?)\.\.\..*?<\/.*?>/);
 				const content = match? match[1].trim(): '';
 				results.push({ title, href, content });
-				document.getElementById('restricted_domains_list').innerHTML += `title: ${title}<br>
-    href: ${href}<br> content: ${content}`;
 			}
 		});
 		return results;
