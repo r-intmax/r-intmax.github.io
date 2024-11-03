@@ -20,6 +20,7 @@
     <br>
     <div id="result"></div>
     <script>
+        const domainRequester = new DomainRequester();
         const currentUrl = window.location.href;
         const match = currentUrl.match(/(^|[?&])q=([^&]*)$/);
         
@@ -33,14 +34,13 @@
             const urlParams = currentUrl.match(/.*\?ua=mobile.*/);
 
             if (urlParams) {
-                viewport.setAttribute("content", "width=400, initial-scale=1.0");
+                viewport.setAttribute("content", "width=380, initial-scale=1.0");
             } else {
                 viewport.setAttribute("content", "width=device-width, initial-scale=1.0");
             }
         }
         window.addEventListener("load", setViewportBasedOnUrl);
-        
-        const domainRequester = new DomainRequester();
+
         const form = document.querySelector('form');
         form.addEventListener('submit', (event) => {
             event.preventDefault();
