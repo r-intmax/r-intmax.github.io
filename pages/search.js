@@ -1,4 +1,4 @@
-var document = window.document;
+var document = window.document; 
 
 function getCookie(name) {
     const cookies = document.cookie.split(";").map(cookie => cookie.trim());
