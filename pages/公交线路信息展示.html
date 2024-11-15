@@ -81,7 +81,7 @@
 		<h2>使用模板</h2>
 		<select id="templateSelect">
 			<option value="default">选择模板</option>
-			<option value="Line_1_data">1号线站点数据</option>
+			<option value="HuWei_Speical_Line_data">沪卫专线</option>
 			<!-- 可以添加更多模板 -->
 		</select>
 		<button id="loadTemplate">加载模板</button>
@@ -239,23 +239,26 @@ const SVG = {
 };
 
 let stationData;
-const Line_1_data = `{
-	"line_name_cn": "1号线",
-	"line_name_en": "Line 1",
-	"line_color": "#FF2023",
+const HuWei_Speical_Line_data = `{
+	"line_name_cn": "沪卫专线",
+	"line_name_en": "HuWei Special Line",
+	"line_color": "#0F6F7F",
 	"current_door": 2,
 	"stations": [
-		{ "name_cn": "站A", "name_en": "Station A", "time_to_previous": 0, "transfers": [{ "name": "日光", "color": "#1E90FF" }], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
-		{ "name_cn": "站B", "name_en": "Station B", "time_to_previous": 3, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
-		{ "name_cn": "站C", "name_en": "Station C", "time_to_previous": 4, "transfers": [], "turns": [{ "name": "576", "exit": 6, "door": 3 }], "doors": [2, 3, 3, 4, 6, 6, 2] },
-		{ "name_cn": "站D", "name_en": "Station D", "time_to_previous": 2, "transfers": [], "turns": [{ "name": "576", "exit": 6 }], "doors": [2, 3, 3, 4, 6, 6, 2] },
-		{ "name_cn": "站E", "name_en": "Shanghai South Railway Station (South Square)", "time_to_previous": 4, "transfers": [], "turns": [{ "name": "576", "exit": 6 }, { "name": "火车站", "exit": 3, "svg": "RAILWAY_SVG" }], "doors": [2, 3, 3, 4, 6, 6, 2] },
-		{ "name_cn": "站F", "name_en": "Station F", "time_to_previous": 2, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
-		{ "name_cn": "站G", "name_en": "Station G", "time_to_previous": 2, "transfers": [{ "name": "川沙", "color": "#32CD32" }, { "name": "D线", "color": "#627D32" }], "turns": [{ "name": "576", "exit": 6 }, { "name": "572", "exit": 6 }], "doors": [4, 3, 3, 4, 6, 6, 1] },
-		{ "name_cn": "站H", "name_en": "Station H", "time_to_previous": 3, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] }
+		{ "name_cn": "人民广场", "name_en": "People's Square", "time_to_previous": 0, "transfers": [{ "name": "南北", "color": "#1E10FF" }, { "name": "东西", "color": "#32CD32" }], "turns": [], "doors": [5, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "卢湾", "name_en": "LuWan", "time_to_previous": 3, "transfers": [{ "name": "南北", "color": "#1E10FF" }], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "徐汇", "name_en": "XuHui", "time_to_previous": 4, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "上海南", "name_en": "Shanghai Railway Station(S.)", "time_to_previous": 4, "transfers": [], "turns": [{ "name": "火车站", "exit": 5, "svg": "RAILWAY_SVG" }], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "莘庄", "name_en": "XinZhaung", "time_to_previous": 4, "transfers": [], "turns": [{ "name": "沪嘉专线", "exit": 4 }, { "name": "沪滴二线", "exit": 4 }], "doors": [2, 3, 3, 4, 1, 6, 2] },
+		{ "name_cn": "新桥", "name_en": "XinQiao", "time_to_previous": 6, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "车墩", "name_en": "CheDun", "time_to_previous": 3, "transfers": [], "turns": [{ "name": "沪卫二线", "exit": 1}], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "叶榭", "name_en": "YeXie", "time_to_previous": 3, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "亭林", "name_en": "TingLin", "time_to_previous": 3, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] },
+		{ "name_cn": "山阳", "name_en": "ShanYang", "time_to_previous": 4, "transfers": [], "turns": [], "doors": [4, 3, 3, 4, 6, 6, 1] },
+		{ "name_cn": "石化", "name_en": "ShiHua", "time_to_previous": 4, "transfers": [], "turns": [], "doors": [2, 3, 3, 4, 6, 6, 2] }
 	],
-	"startpointId": 7,
-	"endpointId": 0
+	"startpointId": 0,
+	"endpointId": 10
 }`;
 
 const text = [
@@ -922,7 +925,7 @@ function displaySubwayInfo(trans) {
 
 	const subwayInfo = document.getElementById('subway-info');
 	subwayInfo.innerHTML = '';
-	
+	subwayInfo.style.width = "1200px";
 	subwayInfo.appendChild(drawHead());
 	subwayInfo.appendChild(document.createElement('div'));
 
@@ -988,7 +991,7 @@ const updateSubwayInfo = async () => {
 		for (let nextStopTime = stations[nextStopId].time_to_previous; nextStopTime > 0; nextStopTime--) {
 			totalTime = nextStopTime;
 			displaySubwayInfo(trans);
-			await new Promise(resolve => setTimeout(resolve, 5000)); // 延迟
+			await new Promise(resolve => setTimeout(resolve, 1000)); // 延迟
 		}
 	}
 };
@@ -1021,8 +1024,8 @@ document.getElementById('uploadButton').addEventListener('click', () => {
 document.getElementById('loadTemplate').addEventListener('click', () => {
     const selectedTemplate = document.getElementById('templateSelect').value;
 
-    if (selectedTemplate === 'Line_1_data') {
-        stationData = Line_1_data;
+    if (selectedTemplate === 'HuWei_Speical_Line_data') {
+        stationData = HuWei_Speical_Line_data;
 		document.getElementById('upload').innerHTML = '';
 		init(stationData);
         updateSubwayInfo();
