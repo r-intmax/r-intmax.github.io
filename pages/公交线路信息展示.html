@@ -991,7 +991,7 @@ const updateSubwayInfo = async () => {
 		for (let nextStopTime = stations[nextStopId].time_to_previous; nextStopTime > 0; nextStopTime--) {
 			totalTime = nextStopTime;
 			displaySubwayInfo(trans);
-			await new Promise(resolve => setTimeout(resolve, 1000)); // 延迟
+			await new Promise(resolve => setTimeout(resolve, 5000)); // 延迟
 		}
 	}
 };
