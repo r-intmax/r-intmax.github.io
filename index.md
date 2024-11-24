@@ -1,6 +1,6 @@
 <style>red{color: red;}</style>
 
-本页最后更新时间 24/11/21 12:21 UTC+8
+本页最后更新时间 24/11/24 14:51 UTC+8
 
 ## 概览
 [b-x理论](/pages/b-x_outline)  
