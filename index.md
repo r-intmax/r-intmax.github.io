@@ -7,7 +7,7 @@
 [组合学](/pages/combinatorics) 定义集暂定公开  
 [中国铁路信号机](/pages/CR_signal.pdf)   
 [搜索](https://cursosonlineja.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?https://r-intmax.github.io/pages/search.html)  
-[AI问答](/pages/chatbot)
+[AI问答](/pages/chatbot)  
 [公交线路信息展示](/pages/公交线路信息展示)
 
 <br><br><br>
