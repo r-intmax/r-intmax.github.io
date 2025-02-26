@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词汇筛选</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .word-item {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>词汇筛选</h1>
+<label for="startIndex">从第几页开始加载:</label>
+<input type="number" id="startIndex" value="1" min="1">
+<button id="loadJson">加载词汇</button><br>
+<button id="exportJson">导出</button>
+<div id="currentPage"></div> <!-- 当前页码显示的 div --><br>
+<div id="wordList"></div>
+<button id="savePage">保存并换到下一页</button>
+
+<script>
+let allWords = [];
+let currentPageIndex = 0; // 当前页面索引
+
+// 加载 JSON 数据的事件监听
+document.getElementById("loadJson").addEventListener("click", function() {
+    // 获取输入的起始页码，并设置 currentPageIndex
+    const startIndex = parseInt(document.getElementById("startIndex").value, 10);
+    if (startIndex < 1) return; // 如果输入的值小于 1，直接返回
+    currentPageIndex = startIndex - 1; // 因为索引是从 0 开始的
+
+    fetch('https://r-intmax.github.io/pages/dict.json')
+        .then(response => response.json())
+        .then(data => {
+            allWords = Object.entries(data);
+            loadWords();
+        })
+        .catch(error => {
+            console.error('加载 JSON 失败:', error);
+        });
+});
+
+// 加载词汇的函数
+function loadWords() {
+    const startIndex = currentPageIndex * 10; // 每页显示 10 个词
+    const wordListDiv = document.getElementById("wordList");
+    const currentPageDiv = document.getElementById("currentPage");
+    wordListDiv.innerHTML = ''; // 清空之前的内容
+
+    const wordsToDisplay = allWords.slice(startIndex, startIndex + 10);
+    wordsToDisplay.forEach(([word, meanings]) => {
+        const wordItem = document.createElement("div");
+        wordItem.className = "word-item";
+        
+        let meaningList = '';
+        for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
+            definitions.forEach(def => {
+                meaningList += `<div>
+                    <strong>${partOfSpeech}:</strong><br>
+                    - ${def}<br>
+                    <label><input type="radio" name="${word}-${def}" value="delete" checked> 删除</label>
+                    <label><input type="radio" name="${word}-${def}" value="synonym"> 同义保留</label>
+                    <label><input type="radio" name="${word}-${def}" value="reference"> 指代保留</label>
+                    <div name="${word}-${def}-reference-container" style="display:none;">
+                        <input type="text" name="${word}-${def}-reference" placeholder="请输入指代字符串" />
+                    </div>
+                    <div><input type="text" name="${word}-${def}-category" placeholder="分类" /></div>
+                </div><br>`;
+            });
+        }
+
+        wordItem.innerHTML = `<strong>${word}</strong><br>${meaningList}<br>`;
+        wordListDiv.appendChild(wordItem);
+    });
+
+    // 显示当前页码信息
+    currentPageDiv.innerHTML = `这是第 ${currentPageIndex + 1} 页`;
+
+    // 添加监听器来显示/隐藏指代字符串输入框
+    document.querySelectorAll(`input[type="radio"][value="reference"]`).forEach(radio => {
+        radio.addEventListener('change', function() {
+            const defContainer = this.closest('div').querySelector(`div[name="${this.name}-reference-container"]`);
+            if (defContainer) {
+                defContainer.style.display = "block";
+            }
+        });
+    });
+
+    document.querySelectorAll(`input[type="radio"][value="delete"], input[type="radio"][value="synonym"]`).forEach(radio => {
+        radio.addEventListener('change', function() {
+            const defContainer = this.closest('div').querySelector(`div[name="${this.name}-reference-container"]`);
+            if (defContainer) {
+                defContainer.style.display = "none";
+            }
+        });
+    });
+}
+
+document.getElementById("savePage").addEventListener("click", function() {
+    const currentData = {};
+    
+    for (const [word, meanings] of allWords) {
+        const wordData = {};
+        
+        for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
+            definitions.forEach(def => {
+                const selectedOption = document.querySelector(`input[name="${word}-${def}"]:checked`);
+                // 安全获取分类值，若未输入，则置为默认值
+                const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
+                const category = categoryInput ? categoryInput.value : '';
+
+                if (selectedOption) {
+                    if (selectedOption.value === 'delete') {
+                        wordData[def] = null; // 删除
+                    } else if (selectedOption.value === 'synonym') {
+                        wordData[def] = { reserve: true, category: category };
+                    } else if (selectedOption.value === 'reference') {
+                        const referenceInput = document.querySelector(`input[name="${word}-${def}-reference"]`);
+                        const referenceValue = referenceInput ? referenceInput.value : '';
+                        wordData[def] = { reserve: referenceValue, category: category };
+                    }
+                }
+            });
+        }
+        currentData[word] = { ...wordData };
+    }
+
+    // 保存到 localStorage
+    const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
+    Object.assign(storedData, currentData);
+    localStorage.setItem('savedWords', JSON.stringify(storedData));
+
+    // 增加页面索引并加载下一页
+    currentPageIndex++;
+    loadWords();
+	
+	// 将页面滚动到顶部
+	window.scrollTo({
+		top: 0,
+		behavior: 'smooth' // 动画的滚动效果
+	});
+});
+
+document.getElementById("exportJson").addEventListener("click", function() {
+    const savedData = localStorage.getItem('savedWords');
+    if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        
+        // 过滤掉值为空的词汇
+        const filteredData = Object.fromEntries(
+            Object.entries(parsedData).filter(([word, meanings]) => {
+                return Object.keys(meanings).length > 0; // 只保留非空对象
+            })
+        );
+
+        // 格式化为美化的 JSON 字符串
+        const beautifiedJson = JSON.stringify(filteredData, null, 4);
+        
+        const blob = new Blob([beautifiedJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'output.json';
+        a.click();
+        URL.revokeObjectURL(url); // 释放内存
+    } else {
+        alert("没有可导出的数据！");
+    }
+});
+    </script>
+</body>
+</html>
