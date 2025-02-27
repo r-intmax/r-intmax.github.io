@@ -35,7 +35,7 @@ document.getElementById("loadJson").addEventListener("click", function() {
     if (startIndex < 1) return; // 如果输入的值小于 1，直接返回
     currentPageIndex = startIndex - 1; // 因为索引是从 0 开始的
 
-    fetch('https://r-intmax.github.io/pages/dict.json')
+    fetch('https://www.myhotelsibiza.com/proxy.php?https://r-intmax.github.io/pages/dict.json')
         .then(response => response.json())
         .then(data => {
             allWords = Object.entries(data);
@@ -46,7 +46,108 @@ document.getElementById("loadJson").addEventListener("click", function() {
         });
 });
 
-// 加载词汇的函数
+let categories;
+
+async function fetchCategories() {
+    try {
+        const response = await fetch('https://www.myhotelsibiza.com/proxy.php?https://r-intmax.github.io/pages/classification.json');
+        if (!response.ok) {
+            throw new Error('网络请求失败');
+        }
+        categories = await response.json(); // 将获取到的数据赋值给全局变量
+    } catch (error) {
+        console.error('发生错误:', error);
+    }
+}
+
+fetchCategories(); // 调用函数以开始加载数据
+
+// 用于生成一级分类下拉框
+function createFirstLevelSelect(word, def) {
+    const selectElement = document.createElement('select');
+    selectElement.innerHTML = '<option value="">选择分类</option>'; // 提供选择提示
+
+    // 添加一级分类
+    for (const firstLevel in categories) {
+        const optionElement = document.createElement('option');
+        optionElement.value = firstLevel; 
+        optionElement.innerHTML = firstLevel;
+        selectElement.appendChild(optionElement);
+    }
+
+    selectElement.onchange = function() {
+        // 清除下级下拉框（如果存在）
+        while (selectElement.nextSibling) {
+            selectElement.parentNode.removeChild(selectElement.nextSibling);
+        }
+        
+        // 添加二级下拉框，并传递word和def
+        const secondLevelSelect = createSecondLevelSelect(selectElement.value, word, def);
+        selectElement.after(secondLevelSelect); // 使用 after方法添加在当前select后
+    };
+
+    return selectElement;
+}
+
+// 用于生成二级分类下拉框
+function createSecondLevelSelect(firstLevel, word, def) {
+    const selectElement = document.createElement('select');
+    selectElement.innerHTML = '<option value="">选择分类</option>'; // 提供选择提示
+
+    // 添加二级分类
+    for (const secondLevel in categories[firstLevel]) {
+        const optionElement = document.createElement('option');
+        optionElement.value = secondLevel; 
+        optionElement.innerHTML = secondLevel;
+        selectElement.appendChild(optionElement);
+    }
+
+    selectElement.onchange = function() {
+        // 清除下级下拉框（如果存在）
+        while (selectElement.nextSibling) {
+            selectElement.parentNode.removeChild(selectElement.nextSibling);
+        }
+        
+        // 添加三级下拉框，并传递word和def
+        const thirdLevelSelect = createThirdLevelSelect(firstLevel, selectElement.value, word, def);
+        selectElement.after(thirdLevelSelect); // 使用 after方法添加在当前select后
+    };
+
+    return selectElement;
+}
+
+// 用于生成三级分类下拉框
+function createThirdLevelSelect(firstLevel, secondLevel, word, def) {
+    const selectElement = document.createElement('select');
+    selectElement.innerHTML = '<option value="">选择分类</option>'; // 提供选择提示
+
+    // 添加三级分类
+    categories[firstLevel][secondLevel].forEach(thirdLevel => {
+        const optionElement = document.createElement('option');
+        optionElement.value = thirdLevel; 
+        optionElement.innerHTML = thirdLevel;
+        selectElement.appendChild(optionElement);
+    });
+
+    // 添加事件监听器以处理三级分类的选择
+    selectElement.onchange = function() {
+        const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
+        const firstLevelSelected = firstLevel;
+        const secondLevelSelected = secondLevel;
+        const thirdLevelSelected = selectElement.value;
+
+        // 如果三级分类有值，拼接并更新输入框
+        if (thirdLevelSelected) {
+            const combinedCategory = `${firstLevelSelected}-${secondLevelSelected}-${thirdLevelSelected}`;
+            if (categoryInput) {
+                categoryInput.value = combinedCategory; // 更新输入框的值
+            }
+        }
+    };
+
+    return selectElement;
+}
+
 function loadWords() {
     const startIndex = currentPageIndex * 10; // 每页显示 10 个词
     const wordListDiv = document.getElementById("wordList");
@@ -57,27 +158,34 @@ function loadWords() {
     wordsToDisplay.forEach(([word, meanings]) => {
         const wordItem = document.createElement("div");
         wordItem.className = "word-item";
-        
-        let meaningList = '';
+        wordItem.innerHTML = `<strong>${word}</strong><br>`;
+		
         for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
             definitions.forEach(def => {
-                meaningList += `<div>
-                    <strong>${partOfSpeech}:</strong><br>
-                    - ${def}<br>
-                    <label><input type="radio" name="${word}-${def}" value="delete" checked> 删除</label>
-                    <label><input type="radio" name="${word}-${def}" value="synonym"> 同义保留</label>
-                    <label><input type="radio" name="${word}-${def}" value="reference"> 指代保留</label>
-                    <div name="${word}-${def}-reference-container" style="display:none;">
-                        <input type="text" name="${word}-${def}-reference" placeholder="请输入指代字符串" />
-                    </div>
-                    <div><input type="text" name="${word}-${def}-category" placeholder="分类" /></div>
-                </div><br>`;
+				const definitionDiv = document.createElement('div');
+
+				definitionDiv.innerHTML = `
+					<strong>${partOfSpeech}:</strong><br>
+					- ${def}<br>
+					<label><input type="radio" name="${word}-${def}" value="delete" checked> 删除</label>
+					<label><input type="radio" name="${word}-${def}" value="synonym"> 同义保留</label>
+					<label><input type="radio" name="${word}-${def}" value="reference"> 指代保留</label>
+					<div name="${word}-${def}-reference-container" style="display:none;">
+						<input type="text" name="${word}-${def}-reference" placeholder="请输入指代字符串" />
+					</div><br>
+					<input type="hidden" name="${word}-${def}-category" value="" /> <!-- 添加隐藏的输入框 -->
+				`;
+
+				const newSelectElement = createFirstLevelSelect(word, def);
+				definitionDiv.appendChild(newSelectElement);
+				wordItem.appendChild(definitionDiv);
+				wordItem.appendChild(document.createElement('br'));
             });
         }
-
-        wordItem.innerHTML = `<strong>${word}</strong><br>${meaningList}<br>`;
+        
         wordListDiv.appendChild(wordItem);
     });
+
 
     // 显示当前页码信息
     currentPageDiv.innerHTML = `这是第 ${currentPageIndex + 1} 页`;
