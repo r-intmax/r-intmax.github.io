@@ -17,16 +17,18 @@
 <body>
     <h1>词汇筛选</h1>
 <label for="startIndex">从第几页开始加载:</label>
-<input type="number" id="startIndex" value="1" min="1">
+<input type="number" id="startIndex" value="1" min="1" max="338">
 <button id="loadJson">加载词汇</button><br>
 <button id="exportJson">导出</button>
-<div id="currentPage"></div> <!-- 当前页码显示的 div --><br>
+<div id="currentPage"></div><br>
 <div id="wordList"></div>
 <button id="savePage">保存并换到下一页</button>
 
 <script>
 let allWords = [];
 let currentPageIndex = 0; // 当前页面索引
+const proxy = '';
+let categories;
 
 // 加载 JSON 数据的事件监听
 document.getElementById("loadJson").addEventListener("click", function() {
@@ -35,32 +37,27 @@ document.getElementById("loadJson").addEventListener("click", function() {
     if (startIndex < 1) return; // 如果输入的值小于 1，直接返回
     currentPageIndex = startIndex - 1; // 因为索引是从 0 开始的
 
-    fetch('https://www.myhotelsibiza.com/proxy.php?https://r-intmax.github.io/pages/dict.json')
-        .then(response => response.json())
-        .then(data => {
-            allWords = Object.entries(data);
-            loadWords();
-        })
-        .catch(error => {
-            console.error('加载 JSON 失败:', error);
-        });
-});
-
-let categories;
-
-async function fetchCategories() {
-    try {
-        const response = await fetch('https://www.myhotelsibiza.com/proxy.php?https://r-intmax.github.io/pages/classification.json');
-        if (!response.ok) {
-            throw new Error('网络请求失败');
+    // 使用 Promise.all 来并行加载多个 JSON 文件
+    Promise.all([
+        fetch(proxy + 'https://r-intmax.github.io/pages/dict.json'),
+        fetch(proxy + 'https://r-intmax.github.io/pages/classification.json')
+    ])
+    .then(responses => {
+        // 检查每个响应是否成功
+        if (!responses[0].ok || !responses[1].ok) {
+            throw new Error('网络响应不是 OK');
         }
-        categories = await response.json(); // 将获取到的数据赋值给全局变量
-    } catch (error) {
-        console.error('发生错误:', error);
-    }
-}
-
-fetchCategories(); // 调用函数以开始加载数据
+        return Promise.all(responses.map(response => response.json()));
+    })
+    .then(data => {
+        allWords = Object.entries(data[0]); // 第一个JSON对象
+        categories = data[1]; // 第二个JSON对象
+        loadWords(); // 加载词汇
+    })
+    .catch(error => {
+        alert('加载 JSON 失败:', error);
+    });
+});
 
 // 用于生成一级分类下拉框
 function createFirstLevelSelect(word, def) {
