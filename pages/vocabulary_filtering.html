@@ -88,9 +88,6 @@ document.getElementById("loadJson").addEventListener("click", function() {
         categories = data[1]; // 第二个JSON对象
         loadWords(); // 加载词汇
     })
-    .catch(error => {
-        alert('加载 JSON 失败:', error);
-    });
 });
 
 // 用于生成分类下拉框
@@ -158,8 +155,8 @@ function showDefinitionDialog(word) {
 
     // 关闭按钮逻辑
     dialogDiv.querySelector('.close-btn').addEventListener('click', () => {
-        dialogDiv.remove();
         save(); // 关闭时保存
+        dialogDiv.remove();
     });
 }
 
@@ -175,6 +172,7 @@ function loadWord(word, wordListDiv) {
     // 获取已保存的单词数据
     const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
     const savedWordData = storedData[word] || {};
+	console.log(savedWordData);
 
     for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
         definitions.forEach(def => {
@@ -193,7 +191,7 @@ function loadWord(word, wordListDiv) {
             const hiddenInputCategory = definitionDiv.querySelector(`input[name="${word}-${def}-category"]`);
             
             if (savedWordData[def]) {
-                hiddenInputSelected.value = savedWordData[def].words.join(', ') || ''; // 设置已选中的词
+                hiddenInputSelected.value = savedWordData[def].words || ''; // 设置已选中的词
                 hiddenInputCategory.value = savedWordData[def].category || ''; // 设置分类
                 // 更新UI中的选中状态
                 const selectedWords = hiddenInputSelected.value.split(', ');
@@ -212,6 +210,7 @@ function loadWord(word, wordListDiv) {
                     const hiddenInput = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
                     const selectedWords = Array.from(definitionDiv.querySelectorAll('.clickable-word.selected')).map(el => el.innerText).join(', ');
                     hiddenInput.value = selectedWords; // 记录选择的单词
+					console.log(selectedWords);
                 });
 
                 span.addEventListener('dblclick', function() {
@@ -220,7 +219,7 @@ function loadWord(word, wordListDiv) {
             });
 
             const newSelectElement = createCategorySelect(word, def);
-            definitionDiv.appendChild(newSelectElement);
+            // definitionDiv.appendChild(newSelectElement);
             wordItem.appendChild(definitionDiv);
             wordItem.appendChild(document.createElement('br'));
         });
@@ -230,12 +229,13 @@ function loadWord(word, wordListDiv) {
 
 // 加载多个词
 function loadWords() {
-    const startIndex = currentPageIndex * 10; // 每页显示 10 个词
+	const article = 8;
+    const startIndex = currentPageIndex * article;
     const wordListDiv = document.getElementById("wordList");
     const currentPageDiv = document.getElementById("currentPage");
     wordListDiv.innerHTML = ''; // 清空之前的内容
 
-    const wordsToDisplay = allWords.slice(startIndex, startIndex + 10);
+    const wordsToDisplay = allWords.slice(startIndex, startIndex + article);
     wordsToDisplay.forEach(([word]) => {
         loadWord(word, wordListDiv);
     });
@@ -244,7 +244,7 @@ function loadWords() {
 }
 
 function save(){
-    const currentData = {};
+    const currentData = JSON.parse(localStorage.getItem('savedWords')) || {};
     
 	for (const [word, meanings] of allWords) {
 		const wordData = {};
@@ -252,8 +252,10 @@ function save(){
 		for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
 			definitions.forEach(def => {
 				// 从定义中获取已被选中的单词
-				const selectedWords = Array.from(document.querySelectorAll(`div[name="${word}-${def}-selected"] .clickable-word.selected`))
-					.map(el => el.innerText);
+				const selectedInput = document.querySelector(`input[name="${word}-${def}-selected"]`);
+				if (selectedInput)	
+					console.log(selectedInput);
+				const selectedWords = selectedInput ? selectedInput.value : '';
 
 				// 安全获取分类值，若未输入，则置为默认值
 				const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
@@ -275,9 +277,9 @@ function save(){
 	}
 
     // 保存到 localStorage
-    const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
-    Object.assign(storedData, currentData);
-    localStorage.setItem('savedWords', JSON.stringify(storedData));
+    const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
+    Object.assign(newStoredData, currentData);
+    localStorage.setItem('savedWords', JSON.stringify(newStoredData));
 }
 
 document.getElementById("savePage").addEventListener("click", function() {
