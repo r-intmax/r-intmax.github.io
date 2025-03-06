@@ -154,10 +154,20 @@ function showDefinitionDialog(word) {
 
     // 关闭按钮逻辑
     dialogDiv.querySelector('.close-btn').addEventListener('click', () => {
-        save(); // 关闭时保存
         dialogDiv.remove();
     });
 }
+
+        let autoSaveInterval = 20000; // 5000毫秒=5秒
+
+        function startAutoSave() {
+            setInterval(save, autoSaveInterval);
+        }
+
+        // 页面加载时启动自动保存
+        window.onload = function() {
+            startAutoSave();
+        };
 
 function loadWord(word, wordListDiv) {
     const wordDataEntry = allWords.find(([w]) => w === word); // 查找对应的词汇定义
