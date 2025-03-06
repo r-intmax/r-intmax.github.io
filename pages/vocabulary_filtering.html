@@ -163,7 +163,6 @@ function showDefinitionDialog(word) {
     });
 }
 
-// 通用加载函数
 function loadWord(word, wordListDiv) {
     const wordDataEntry = allWords.find(([w]) => w === word); // 查找对应的词汇定义
     if (!wordDataEntry) return; // 若未找到对应的词，则返回
@@ -173,12 +172,15 @@ function loadWord(word, wordListDiv) {
     wordItem.className = "word-item";
     wordItem.innerHTML = `<strong>${word}</strong><br>`;
 
+    // 获取已保存的单词数据
+    const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
+    const savedWordData = storedData[word] || {};
+
     for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
         definitions.forEach(def => {
             const definitionDiv = document.createElement('div');
-            // 将定义中的每个单词变为可点击元素
             const words = def.split(' ').map(w => `<span class="clickable-word">${w}</span>`).join(' ');
-            
+
             definitionDiv.innerHTML = `
                 <strong>${partOfSpeech}:</strong><br>
                 - ${words}<br>
@@ -186,9 +188,25 @@ function loadWord(word, wordListDiv) {
                 <input type="hidden" name="${word}-${def}-category" value="" /> <!-- 存储分类(若有) -->
             `;
 
+            // 设置隐藏输入的值，如果存在的话
+            const hiddenInputSelected = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
+            const hiddenInputCategory = definitionDiv.querySelector(`input[name="${word}-${def}-category"]`);
+            
+            if (savedWordData[def]) {
+                hiddenInputSelected.value = savedWordData[def].words.join(', ') || ''; // 设置已选中的词
+                hiddenInputCategory.value = savedWordData[def].category || ''; // 设置分类
+                // 更新UI中的选中状态
+                const selectedWords = hiddenInputSelected.value.split(', ');
+                selectedWords.forEach(selectedWord => {
+                    const clickableWord = Array.from(definitionDiv.querySelectorAll('.clickable-word')).find(el => el.innerText === selectedWord);
+                    if (clickableWord) {
+                        clickableWord.classList.add('selected'); // 添加选中状态
+                    }
+                });
+            }
+
             // 为每个单词添加点击和长按事件
             definitionDiv.querySelectorAll('.clickable-word').forEach(span => {
-                // Click event for selecting
                 span.addEventListener('click', function() {
                     this.classList.toggle('selected'); // 切换选中状态
                     const hiddenInput = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
@@ -196,18 +214,8 @@ function loadWord(word, wordListDiv) {
                     hiddenInput.value = selectedWords; // 记录选择的单词
                 });
 
-                // Long press event to show definitions
-                let pressTimer;
-                span.addEventListener('mousedown', function() {
-                    pressTimer = setTimeout(() => {
-                        showDefinitionDialog(this.innerText); // Call the dialog
-                    }, 700);
-                });
-                span.addEventListener('mouseup', function() {
-                    clearTimeout(pressTimer);
-                });
-                span.addEventListener('mouseleave', function() {
-                    clearTimeout(pressTimer);
+                span.addEventListener('dblclick', function() {
+                    showDefinitionDialog(this.innerText); // Call the dialog
                 });
             });
 
