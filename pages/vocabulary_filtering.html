@@ -5,13 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>词汇筛选</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        .word-item {
-            margin-bottom: 20px;
-        }
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+}
+.word-item {
+	margin-bottom: 20px;
+}
+.clickable-word {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.clickable-word.selected {
+    background-color: #007bff; /* 选中的背景颜色 */
+    color: white;  /* 选中的文本颜色 */
+}
+
+.dialog {
+    position: fixed;
+    top: 50%;
+    left: calc(50% + 5px);
+    transform: translate(-50%, -50%);
+    width: 400px; /* 可根据需要调整 */
+    max-height: 80vh; /* 最大高度为视口的80% */
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* 隐藏部分溢出内容 */
+	overflow-y: auto; /* 启用垂直方向滚动条 */
+}
+
+.content {
+    max-height: 70vh; /* 内容最大高度 */
+    overflow-y: auto; /* 启用垂直方向滚动条 */
+    padding: 10px; /* 内容内边距 */
+}
+
+.close-btn {
+    margin-top: 10px;
+}
     </style>
 </head>
 <body>
@@ -25,9 +59,9 @@
 <button id="savePage">保存并换到下一页</button>
 
 <script>
+const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
 let allWords = [];
 let currentPageIndex = 0; // 当前页面索引
-const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
 let categories;
 
 // 加载 JSON 数据的事件监听
@@ -59,92 +93,134 @@ document.getElementById("loadJson").addEventListener("click", function() {
     });
 });
 
-// 用于生成一级分类下拉框
-function createFirstLevelSelect(word, def) {
-    const selectElement = document.createElement('select');
-    selectElement.innerHTML = '<option value="">选择分类</option>'; // 提供选择提示
+// 用于生成分类下拉框
+function createCategorySelect(word, def, parentValueList = []) {
+    let options = [];
+    let level = parentValueList.length;
 
-    // 添加一级分类
-    for (const firstLevel in categories) {
-        const optionElement = document.createElement('option');
-        optionElement.value = firstLevel; 
-        optionElement.innerHTML = firstLevel;
-        selectElement.appendChild(optionElement);
+    if (level === 0) {
+        options = Object.keys(categories);
+    } else if (level === 1) {
+        options = Object.keys(categories[parentValueList[0]]);
+    } else if (level === 2) {
+        options = categories[parentValueList[0]][parentValueList[1]];
     }
+
+	const selectElement = document.createElement('select');
+	selectElement.innerHTML = `<option value="">选择分类</option>`; // 提供选择提示
+
+	options.forEach(optionValue => {
+		const optionElement = document.createElement('option');
+		optionElement.value = optionValue; 
+		optionElement.innerHTML = optionValue;
+		selectElement.appendChild(optionElement);
+	});
 
     selectElement.onchange = function() {
         // 清除下级下拉框（如果存在）
         while (selectElement.nextSibling) {
             selectElement.parentNode.removeChild(selectElement.nextSibling);
         }
-        
-        // 添加二级下拉框，并传递word和def
-        const secondLevelSelect = createSecondLevelSelect(selectElement.value, word, def);
-        selectElement.after(secondLevelSelect); // 使用 after方法添加在当前select后
-    };
 
-    return selectElement;
-}
+        // 创建新的分类列表
+        const newParentValueList = [...parentValueList, selectElement.value];
 
-// 用于生成二级分类下拉框
-function createSecondLevelSelect(firstLevel, word, def) {
-    const selectElement = document.createElement('select');
-    selectElement.innerHTML = '<option value="">选择分类</option>'; // 提供选择提示
-
-    // 添加二级分类
-    for (const secondLevel in categories[firstLevel]) {
-        const optionElement = document.createElement('option');
-        optionElement.value = secondLevel; 
-        optionElement.innerHTML = secondLevel;
-        selectElement.appendChild(optionElement);
-    }
-
-    selectElement.onchange = function() {
-        // 清除下级下拉框（如果存在）
-        while (selectElement.nextSibling) {
-            selectElement.parentNode.removeChild(selectElement.nextSibling);
-        }
-        
-        // 添加三级下拉框，并传递word和def
-        const thirdLevelSelect = createThirdLevelSelect(firstLevel, selectElement.value, word, def);
-        selectElement.after(thirdLevelSelect); // 使用 after方法添加在当前select后
-    };
-
-    return selectElement;
-}
-
-// 用于生成三级分类下拉框
-function createThirdLevelSelect(firstLevel, secondLevel, word, def) {
-    const selectElement = document.createElement('select');
-    selectElement.innerHTML = '<option value="">选择分类</option>'; // 提供选择提示
-
-    // 添加三级分类
-    categories[firstLevel][secondLevel].forEach(thirdLevel => {
-        const optionElement = document.createElement('option');
-        optionElement.value = thirdLevel; 
-        optionElement.innerHTML = thirdLevel;
-        selectElement.appendChild(optionElement);
-    });
-
-    // 添加事件监听器以处理三级分类的选择
-    selectElement.onchange = function() {
-        const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
-        const firstLevelSelected = firstLevel;
-        const secondLevelSelected = secondLevel;
-        const thirdLevelSelected = selectElement.value;
-
-        // 如果三级分类有值，拼接并更新输入框
-        if (thirdLevelSelected) {
-            const combinedCategory = `${firstLevelSelected}-${secondLevelSelected}-${thirdLevelSelected}`;
-            if (categoryInput) {
+        if (newParentValueList.length === 3) {
+            const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
+            const combinedCategory = newParentValueList.join('-');
+            if (categoryInput && selectElement.value) {
                 categoryInput.value = combinedCategory; // 更新输入框的值
             }
-        }
+        } else {
+			const nextLevelSelect = createCategorySelect(word, def, newParentValueList);
+			selectElement.after(nextLevelSelect); // 使用 after 方法添加在当前 select 后
+		}
     };
 
     return selectElement;
 }
 
+function showDefinitionDialog(word) {
+    // 在 allWords 中查找对应词的定义
+    const wordDataEntry = allWords.find(([w]) => w === word);
+    const dialogDiv = document.createElement('div');
+    dialogDiv.className = 'dialog'; // 对话框样式
+
+    dialogDiv.innerHTML = `<h2>${word}</h2><button class="close-btn">关闭</button>`;
+    if (wordDataEntry) {
+        const meanings = wordDataEntry[1]; // 获取该词的定义
+		loadWord(word, dialogDiv);
+    } else {
+        dialogDiv.innerHTML += `<div>${word} 未收录</div>`;
+    }
+
+    document.body.appendChild(dialogDiv);
+
+    // 关闭按钮逻辑
+    dialogDiv.querySelector('.close-btn').addEventListener('click', () => {
+        dialogDiv.remove();
+        save(); // 关闭时保存
+    });
+}
+
+// 通用加载函数
+function loadWord(word, wordListDiv) {
+    const wordDataEntry = allWords.find(([w]) => w === word); // 查找对应的词汇定义
+    if (!wordDataEntry) return; // 若未找到对应的词，则返回
+
+    const meanings = wordDataEntry[1]; // 获取该词的定义
+    const wordItem = document.createElement("div");
+    wordItem.className = "word-item";
+    wordItem.innerHTML = `<strong>${word}</strong><br>`;
+
+    for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
+        definitions.forEach(def => {
+            const definitionDiv = document.createElement('div');
+            // 将定义中的每个单词变为可点击元素
+            const words = def.split(' ').map(w => `<span class="clickable-word">${w}</span>`).join(' ');
+            
+            definitionDiv.innerHTML = `
+                <strong>${partOfSpeech}:</strong><br>
+                - ${words}<br>
+                <input type="hidden" name="${word}-${def}-selected" value="" /> <!-- 存储选择的词 -->
+                <input type="hidden" name="${word}-${def}-category" value="" /> <!-- 存储分类(若有) -->
+            `;
+
+            // 为每个单词添加点击和长按事件
+            definitionDiv.querySelectorAll('.clickable-word').forEach(span => {
+                // Click event for selecting
+                span.addEventListener('click', function() {
+                    this.classList.toggle('selected'); // 切换选中状态
+                    const hiddenInput = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
+                    const selectedWords = Array.from(definitionDiv.querySelectorAll('.clickable-word.selected')).map(el => el.innerText).join(', ');
+                    hiddenInput.value = selectedWords; // 记录选择的单词
+                });
+
+                // Long press event to show definitions
+                let pressTimer;
+                span.addEventListener('mousedown', function() {
+                    pressTimer = setTimeout(() => {
+                        showDefinitionDialog(this.innerText); // Call the dialog
+                    }, 700);
+                });
+                span.addEventListener('mouseup', function() {
+                    clearTimeout(pressTimer);
+                });
+                span.addEventListener('mouseleave', function() {
+                    clearTimeout(pressTimer);
+                });
+            });
+
+            const newSelectElement = createCategorySelect(word, def);
+            definitionDiv.appendChild(newSelectElement);
+            wordItem.appendChild(definitionDiv);
+            wordItem.appendChild(document.createElement('br'));
+        });
+    }
+    wordListDiv.appendChild(wordItem);
+}
+
+// 加载多个词
 function loadWords() {
     const startIndex = currentPageIndex * 10; // 每页显示 10 个词
     const wordListDiv = document.getElementById("wordList");
@@ -152,94 +228,52 @@ function loadWords() {
     wordListDiv.innerHTML = ''; // 清空之前的内容
 
     const wordsToDisplay = allWords.slice(startIndex, startIndex + 10);
-    wordsToDisplay.forEach(([word, meanings]) => {
-        const wordItem = document.createElement("div");
-        wordItem.className = "word-item";
-        wordItem.innerHTML = `<strong>${word}</strong><br>`;
-		
-        for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
-            definitions.forEach(def => {
-				const definitionDiv = document.createElement('div');
-
-				definitionDiv.innerHTML = `
-					<strong>${partOfSpeech}:</strong><br>
-					- ${def}<br>
-					<label><input type="radio" name="${word}-${def}" value="delete" checked> 删除</label>
-					<label><input type="radio" name="${word}-${def}" value="synonym"> 同义保留</label>
-					<label><input type="radio" name="${word}-${def}" value="reference"> 指代保留</label>
-					<div name="${word}-${def}-reference-container" style="display:none;">
-						<input type="text" name="${word}-${def}-reference" placeholder="请输入指代字符串" />
-					</div><br>
-					<input type="hidden" name="${word}-${def}-category" value="" /> <!-- 添加隐藏的输入框 -->
-				`;
-
-				const newSelectElement = createFirstLevelSelect(word, def);
-				definitionDiv.appendChild(newSelectElement);
-				wordItem.appendChild(definitionDiv);
-				wordItem.appendChild(document.createElement('br'));
-            });
-        }
-        
-        wordListDiv.appendChild(wordItem);
+    wordsToDisplay.forEach(([word]) => {
+        loadWord(word, wordListDiv);
     });
 
-
-    // 显示当前页码信息
     currentPageDiv.innerHTML = `这是第 ${currentPageIndex + 1} 页`;
-
-    // 添加监听器来显示/隐藏指代字符串输入框
-    document.querySelectorAll(`input[type="radio"][value="reference"]`).forEach(radio => {
-        radio.addEventListener('change', function() {
-            const defContainer = this.closest('div').querySelector(`div[name="${this.name}-reference-container"]`);
-            if (defContainer) {
-                defContainer.style.display = "block";
-            }
-        });
-    });
-
-    document.querySelectorAll(`input[type="radio"][value="delete"], input[type="radio"][value="synonym"]`).forEach(radio => {
-        radio.addEventListener('change', function() {
-            const defContainer = this.closest('div').querySelector(`div[name="${this.name}-reference-container"]`);
-            if (defContainer) {
-                defContainer.style.display = "none";
-            }
-        });
-    });
 }
 
-document.getElementById("savePage").addEventListener("click", function() {
+function save(){
     const currentData = {};
     
-    for (const [word, meanings] of allWords) {
-        const wordData = {};
-        
-        for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
-            definitions.forEach(def => {
-                const selectedOption = document.querySelector(`input[name="${word}-${def}"]:checked`);
-                // 安全获取分类值，若未输入，则置为默认值
-                const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
-                const category = categoryInput ? categoryInput.value : '';
+	for (const [word, meanings] of allWords) {
+		const wordData = {};
+		
+		for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
+			definitions.forEach(def => {
+				// 从定义中获取已被选中的单词
+				const selectedWords = Array.from(document.querySelectorAll(`div[name="${word}-${def}-selected"] .clickable-word.selected`))
+					.map(el => el.innerText);
 
-                if (selectedOption) {
-                    if (selectedOption.value === 'delete') {
-                        wordData[def] = null; // 删除
-                    } else if (selectedOption.value === 'synonym') {
-                        wordData[def] = { reserve: true, category: category };
-                    } else if (selectedOption.value === 'reference') {
-                        const referenceInput = document.querySelector(`input[name="${word}-${def}-reference"]`);
-                        const referenceValue = referenceInput ? referenceInput.value : '';
-                        wordData[def] = { reserve: referenceValue, category: category };
-                    }
-                }
-            });
-        }
-        currentData[word] = { ...wordData };
-    }
+				// 安全获取分类值，若未输入，则置为默认值
+				const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
+				const category = categoryInput ? categoryInput.value : '';
+
+				// 如果用户选择了任何单词，则将它们存储在 wordData 中
+				if (selectedWords.length > 0) {
+					wordData[def] = {
+						words: selectedWords,
+						category: category
+					};
+				} else {
+					// wordData[def] = null;
+				}
+			});
+		}
+		
+		currentData[word] = { ...wordData };
+	}
 
     // 保存到 localStorage
     const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
     Object.assign(storedData, currentData);
     localStorage.setItem('savedWords', JSON.stringify(storedData));
+}
+
+document.getElementById("savePage").addEventListener("click", function() {
+	save();
 
     // 增加页面索引并加载下一页
     currentPageIndex++;
