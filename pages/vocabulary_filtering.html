@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>词汇筛选</title>
+    <title>词汇净化</title>
     <style>
 body {
 	font-family: Arial, sans-serif;
@@ -25,10 +25,9 @@ body {
 
 .dialog {
     position: fixed;
-    top: 50%;
-    left: calc(50% + 5px);
-    transform: translate(-50%, -50%);
-    width: 400px; /* 可根据需要调整 */
+    top: 20px;
+    left: 5px;
+    width: 75%; /* 可根据需要调整 */
     max-height: 80vh; /* 最大高度为视口的80% */
     background: white;
     border: 1px solid #ccc;
@@ -49,7 +48,7 @@ body {
     </style>
 </head>
 <body>
-    <h1>词汇筛选</h1>
+    <h2>词汇净化</h2>
 <label for="startIndex">从第几页开始加载:</label>
 <input type="number" id="startIndex" value="1" min="1" max="338">
 <button id="loadJson">加载词汇</button><br>
@@ -59,7 +58,7 @@ body {
 <button id="savePage">保存并换到下一页</button>
 
 <script>
-const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
+const proxy = ''; //'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
 let allWords = [];
 let currentPageIndex = 0; // 当前页面索引
 let categories;
