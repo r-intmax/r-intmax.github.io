@@ -154,6 +154,7 @@ function showDefinitionDialog(word) {
 
     // 关闭按钮逻辑
     dialogDiv.querySelector('.close-btn').addEventListener('click', () => {
+	save();
         dialogDiv.remove();
     });
 }
