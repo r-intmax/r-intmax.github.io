@@ -49,19 +49,21 @@ body {
 </head>
 <body>
     <h2>词汇净化</h2>
-<label for="startIndex">从第几页开始加载:</label>
-<input type="number" id="startIndex" value="1" min="1" max="338">
-<button id="loadJson">加载词汇</button><br>
+<label for="startIndex">页码</label>
+<input type="number" id="startIndex" value="1" min="1">
+<button id="loadJson">跳转</button><br>
 <button id="exportJson">导出</button>
+<button id="showBaseWords">展示基</button>
 <div id="currentPage"></div><br>
 <div id="wordList"></div>
 <button id="savePage">保存并换到下一页</button>
 
 <script>
-const proxy = ''; //'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
+const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
 let allWords = [];
 let currentPageIndex = 0; // 当前页面索引
 let categories;
+let saveList = [];
 
 // 加载 JSON 数据的事件监听
 document.getElementById("loadJson").addEventListener("click", function() {
@@ -69,24 +71,7 @@ document.getElementById("loadJson").addEventListener("click", function() {
     const startIndex = parseInt(document.getElementById("startIndex").value, 10);
     if (startIndex < 1) return; // 如果输入的值小于 1，直接返回
     currentPageIndex = startIndex - 1; // 因为索引是从 0 开始的
-
-    // 使用 Promise.all 来并行加载多个 JSON 文件
-    Promise.all([
-        fetch(proxy + 'https://r-intmax.github.io/pages/dict.json'),
-        fetch(proxy + 'https://r-intmax.github.io/pages/classification.json')
-    ])
-    .then(responses => {
-        // 检查每个响应是否成功
-        if (!responses[0].ok || !responses[1].ok) {
-            throw new Error('网络响应不是 OK');
-        }
-        return Promise.all(responses.map(response => response.json()));
-    })
-    .then(data => {
-        allWords = Object.entries(data[0]); // 第一个JSON对象
-        categories = data[1]; // 第二个JSON对象
-        loadWords(); // 加载词汇
-    })
+	loadWords(); // 加载词汇
 });
 
 // 用于生成分类下拉框
@@ -141,6 +126,7 @@ function showDefinitionDialog(word) {
     const wordDataEntry = allWords.find(([w]) => w === word);
     const dialogDiv = document.createElement('div');
     dialogDiv.className = 'dialog'; // 对话框样式
+	saveList.push(word);
 
     dialogDiv.innerHTML = `<h2>${word}</h2><button class="close-btn">关闭</button>`;
     if (wordDataEntry) {
@@ -154,35 +140,23 @@ function showDefinitionDialog(word) {
 
     // 关闭按钮逻辑
     dialogDiv.querySelector('.close-btn').addEventListener('click', () => {
-	save();
+		save();
+		saveList.pop();
         dialogDiv.remove();
     });
 }
 
-        let autoSaveInterval = 20000; // 5000毫秒=5秒
-
-        function startAutoSave() {
-            setInterval(save, autoSaveInterval);
-        }
-
-        // 页面加载时启动自动保存
-        window.onload = function() {
-            startAutoSave();
-        };
-
 function loadWord(word, wordListDiv) {
-    const wordDataEntry = allWords.find(([w]) => w === word); // 查找对应的词汇定义
-    if (!wordDataEntry) return; // 若未找到对应的词，则返回
+    const wordDataEntry = allWords.find(([w]) => w === word);
+    if (!wordDataEntry) return;
 
-    const meanings = wordDataEntry[1]; // 获取该词的定义
+    const meanings = wordDataEntry[1];
     const wordItem = document.createElement("div");
     wordItem.className = "word-item";
     wordItem.innerHTML = `<strong>${word}</strong><br>`;
 
-    // 获取已保存的单词数据
     const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
     const savedWordData = storedData[word] || {};
-	console.log(savedWordData);
 
     for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
         definitions.forEach(def => {
@@ -192,14 +166,17 @@ function loadWord(word, wordListDiv) {
             definitionDiv.innerHTML = `
                 <strong>${partOfSpeech}:</strong><br>
                 - ${words}<br>
-                <input type="hidden" name="${word}-${def}-selected" value="" /> <!-- 存储选择的词 -->
-                <input type="hidden" name="${word}-${def}-category" value="" /> <!-- 存储分类(若有) -->
+                <input type="hidden" name="${word}-${def}-selected" value="" />
+                <input type="hidden" name="${word}-${def}-category" value="" />
+				<label class="delete-btn"><input type="radio" name="${word}-${def}-options" value="delete" checked />删除</label>
+				<label class="base-btn"><input type="radio" name="${word}-${def}-options" value="base" />基</label>
+				<label class="category-btn"><input type="radio" name="${word}-${def}-options" value="category" />分类</label>
             `;
 
-            // 设置隐藏输入的值，如果存在的话
             const hiddenInputSelected = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
             const hiddenInputCategory = definitionDiv.querySelector(`input[name="${word}-${def}-category"]`);
-            
+
+            // 更新输入框中的值
             if (savedWordData[def]) {
                 hiddenInputSelected.value = savedWordData[def].words || ''; // 设置已选中的词
                 hiddenInputCategory.value = savedWordData[def].category || ''; // 设置分类
@@ -211,32 +188,68 @@ function loadWord(word, wordListDiv) {
                         clickableWord.classList.add('selected'); // 添加选中状态
                     }
                 });
+				const buttons = definitionDiv.querySelectorAll('.delete-btn, .base-btn, .category-btn');
+				if (selectedWords[0] !== '') {
+					buttons.forEach(btn => btn.style.display = 'none');
+				}
             }
+			
+			const newSelectElement = createCategorySelect(word, def);
+			newSelectElement.id = `${word}-${def}-category`;
+			
+			function removeCategory(){
+				hiddenInputCategory.value = '';
+				const existingSelectElement = document.getElementById(`${word}-${def}-category`);
+    
+				if (existingSelectElement) {
+					definitionDiv.removeChild(existingSelectElement);
+				}
+			}
 
-            // 为每个单词添加点击和长按事件
+            // 添加单词点击事件
             definitionDiv.querySelectorAll('.clickable-word').forEach(span => {
                 span.addEventListener('click', function() {
-                    this.classList.toggle('selected'); // 切换选中状态
-                    const hiddenInput = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
+                    this.classList.toggle('selected');
                     const selectedWords = Array.from(definitionDiv.querySelectorAll('.clickable-word.selected')).map(el => el.innerText).join(', ');
-                    hiddenInput.value = selectedWords; // 记录选择的单词
-					console.log(selectedWords);
+                    hiddenInputSelected.value = selectedWords;
+					const buttons = definitionDiv.querySelectorAll('.delete-btn, .base-btn, .category-btn');
+					removeCategory();
+					if (selectedWords === '') {
+						buttons.forEach(btn => btn.style.display = 'inline-block'); 
+					} else {
+						buttons.forEach(btn => btn.style.display = 'none');
+					}
                 });
-
-                span.addEventListener('dblclick', function() {
-                    showDefinitionDialog(this.innerText); // Call the dialog
-                });
+					
+				span.addEventListener('dblclick', function() {
+					showDefinitionDialog(this.innerText); // Call the dialog
+				});
             });
 
-            const newSelectElement = createCategorySelect(word, def);
-            // definitionDiv.appendChild(newSelectElement);
+            // 添加按钮的事件
+            const deleteBtn = definitionDiv.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', function() {
+				removeCategory();
+            });
+
+            const baseBtn = definitionDiv.querySelector('.base-btn');
+            baseBtn.addEventListener('click', function() {
+				removeCategory();
+                hiddenInputSelected.value = '_base'; // 设置为 base
+            });
+
+            const categoryBtn = definitionDiv.querySelector('.category-btn');
+            categoryBtn.addEventListener('click', function() {
+                removeCategory();
+				definitionDiv.appendChild(newSelectElement); 
+            });
+			
             wordItem.appendChild(definitionDiv);
             wordItem.appendChild(document.createElement('br'));
         });
     }
     wordListDiv.appendChild(wordItem);
 }
-
 // 加载多个词
 function loadWords() {
 	const article = 8;
@@ -244,10 +257,12 @@ function loadWords() {
     const wordListDiv = document.getElementById("wordList");
     const currentPageDiv = document.getElementById("currentPage");
     wordListDiv.innerHTML = ''; // 清空之前的内容
+	saveList.length = 0;
 
     const wordsToDisplay = allWords.slice(startIndex, startIndex + article);
     wordsToDisplay.forEach(([word]) => {
         loadWord(word, wordListDiv);
+		saveList.push(word);
     });
 
     currentPageDiv.innerHTML = `这是第 ${currentPageIndex + 1} 页`;
@@ -255,24 +270,27 @@ function loadWords() {
 
 function save(){
     const currentData = JSON.parse(localStorage.getItem('savedWords')) || {};
+	const newList = [];
+
+	// 遍历 saveList 中的每个词
+	for (const word of saveList) {
+		const found = allWords.find(([w]) => w === word);
+		if (found) {
+			newList.push(found);
+		}
+	}
     
-	for (const [word, meanings] of allWords) {
+	for (const [word, meanings] of newList) {
 		const wordData = {};
 		
 		for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
 			definitions.forEach(def => {
-				// 从定义中获取已被选中的单词
 				const selectedInput = document.querySelector(`input[name="${word}-${def}-selected"]`);
-				if (selectedInput)	
-					console.log(selectedInput);
 				const selectedWords = selectedInput ? selectedInput.value : '';
-
-				// 安全获取分类值，若未输入，则置为默认值
 				const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
 				const category = categoryInput ? categoryInput.value : '';
 
-				// 如果用户选择了任何单词，则将它们存储在 wordData 中
-				if (selectedWords.length > 0) {
+				if (selectedWords.length > 0 || categoryInput) {
 					wordData[def] = {
 						words: selectedWords,
 						category: category
@@ -292,6 +310,45 @@ function save(){
     localStorage.setItem('savedWords', JSON.stringify(newStoredData));
 }
 
+function showLoadingMessage() {
+    // 创建一个简单的加载消息元素
+    const loadingMessage = document.createElement('div');
+    loadingMessage.id = 'loading-message';
+    loadingMessage.innerText = '正在加载...';
+    document.body.appendChild(loadingMessage); // 添加到页面底部
+}
+
+function removeLoadingMessage() {
+    const loadingMessage = document.getElementById('loading-message');
+    if (loadingMessage) {
+        document.body.removeChild(loadingMessage); // 移除加载消息
+    }
+}
+
+window.onload = function() {
+	setInterval(save, 20000);
+	showLoadingMessage();
+	// 使用 Promise.all 来并行加载多个 JSON 文件
+    Promise.all([
+        fetch(proxy + 'https://r-intmax.github.io/pages/dict.json'),
+        fetch(proxy + 'https://r-intmax.github.io/pages/classification.json')
+    ])
+    .then(responses => {
+        // 检查每个响应是否成功
+        if (!responses[0].ok || !responses[1].ok) {
+            throw new Error('网络响应不是 OK');
+        }
+        return Promise.all(responses.map(response => response.json()));
+    })
+    .then(data => {
+        allWords = Object.entries(data[0]); // 第一个JSON对象
+        categories = data[1]; // 第二个JSON对象
+    })
+	.finally(() => {
+		removeLoadingMessage();
+	})
+};
+
 document.getElementById("savePage").addEventListener("click", function() {
 	save();
 
@@ -301,8 +358,7 @@ document.getElementById("savePage").addEventListener("click", function() {
 	
 	// 将页面滚动到顶部
 	window.scrollTo({
-		top: 0,
-		behavior: 'smooth' // 动画的滚动效果
+		top: 0
 	});
 });
 
@@ -332,6 +388,44 @@ document.getElementById("exportJson").addEventListener("click", function() {
         alert("没有可导出的数据！");
     }
 });
+
+document.getElementById("showBaseWords").addEventListener("click", function() {
+	const savedWords = JSON.parse(localStorage.getItem('savedWords')) || {};
+	const baseWords = [];
+	
+	// 遍历 savedWords
+	for (const w in savedWords) {
+		if (savedWords.hasOwnProperty(w)) {
+			const wordData = savedWords[w];
+			for (const key in wordData) {
+				if (wordData.hasOwnProperty(key)) {
+					const word = wordData[key];
+					if (word.words === '_base') {
+						baseWords.push(w);
+					}
+				}
+			}
+		}
+	}
+	
+	const wordList = document.createElement('div');
+	wordList.innerHTML = '<h2>基词表</h2><button class="close-btn">关闭</button>';
+	wordList.className = 'dialog';
+
+	// 将符合条件的单词添加到列表
+	baseWords.forEach(word => {
+		const li = document.createElement('li');
+		li.textContent = word;
+		wordList.appendChild(li);
+	});
+	
+	document.body.appendChild(wordList);
+
+	wordList.querySelector('.close-btn').addEventListener('click', () => {
+		wordList.remove();
+    });
+});
+
     </script>
 </body>
 </html>
