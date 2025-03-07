@@ -27,7 +27,7 @@ body {
     position: fixed;
     top: 20px;
     left: 5px;
-    width: 75%; /* 可根据需要调整 */
+    width: 95%; /* 可根据需要调整 */
     max-height: 80vh; /* 最大高度为视口的80% */
     background: white;
     border: 1px solid #ccc;
@@ -470,7 +470,7 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 	for (const [w, wordData] of Object.entries(savedWords)) {
 		if (wordData && typeof wordData === 'object') {  
 			for (const key in wordData) {
-				if (wordData.hasOwnProperty(key) && wordData[key].words === '_base') {
+				if (wordData.hasOwnProperty(key) && wordData[key] === '_base') {
 					baseWords.push(w); 
 					break; 
 				}
