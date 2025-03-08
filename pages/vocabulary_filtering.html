@@ -62,7 +62,7 @@ body {
 <button id="savePage">保存并换到下一页</button>
 
 <script>
-const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
+const proxy = ''; //https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?
 let allWords = [];
 let categories;
 let saveList = [];
@@ -376,8 +376,8 @@ window.onload = function() {
 	showLoadingMessage();
 	// 使用 Promise.all 来并行加载多个 JSON 文件
     Promise.all([
-        fetch(proxy + 'https://r-intmax.github.io/pages/dict.json'),
-        fetch(proxy + 'https://r-intmax.github.io/pages/classification.json')
+        fetch(proxy + 'https://r-intmax.github.io/data/dict.json'),
+        fetch(proxy + 'https://r-intmax.github.io/data/classification.json')
     ])
     .then(responses => {
         // 检查每个响应是否成功
