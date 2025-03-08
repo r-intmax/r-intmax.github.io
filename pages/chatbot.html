@@ -36,7 +36,6 @@
             padding: 10px;
         }
     </style>
-	<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -107,7 +106,7 @@
 
     function displayMessage(message) {
         const chatDiv = document.getElementById('chat');
-        chatDiv.innerHTML += `<div>${marked.parse(message)}<\/div>`;
+        chatDiv.innerHTML += `<div>${message}<\/div>`;
         chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to the bottom
     }
 </script>
