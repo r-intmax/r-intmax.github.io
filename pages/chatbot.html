@@ -44,6 +44,62 @@
 <button id="send">Send</button>
 
 <script>
+
+function mMarked(text) {
+  // 按空行分割文本块
+  const blocks = text.split(/\n\s*\n/);
+
+  function parseBlock(block) {
+    // 处理标题
+    if (/^#{1,6}\s/.test(block)) {
+      const level = block.match(/^#+/)[0].length;
+      return `<h${level}>${block.replace(/^#+\s*/, '')}</h${level}>`;
+    }
+
+    // 处理无序列表
+    const listHtml = parseList(block);
+    if (listHtml) return listHtml;
+
+    // 处理代码块
+    if (block.startsWith('```')) {
+      const [lang, ...code] = block.split('\n');
+      return `<pre><code>${code.join('\n').replace(/```/, '')}</code></pre>`;
+    }
+
+    // 默认作为段落
+    return `<p>${block}</p>`;
+  }
+
+  // 处理无序列表
+  function parseList(block) {
+    if (block.startsWith('* ')) {
+      const items = block.split('\n').map(line => 
+        line.replace(/^\*\s+(.*)/, '<li>$1</li>')
+      );
+      return `<ul>\n${items.join('\n')}\n</ul>`;
+    }
+    return null;
+  }
+
+  function parseInline(html) {
+    // 加粗：**text** → <strong>text</strong>
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // 链接：[text](url) → <a href="url">text</a>
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>');
+
+    // 行内代码：`code` → <code>code</code>
+    return html.replace(/`(.*?)`/g, '<code>$1</code>');
+  }
+
+  return blocks.map(block => {
+    let html = parseBlock(block);
+    // 处理内联元素
+    html = parseInline(html);
+    return html;
+  }).join('\n');
+}
+	
     const messages = [];
     let i = 0;
 
@@ -96,8 +152,13 @@
             });
 
             const answer = await response.text();
-            displayMessage(`O[${i-1}]: ${answer}`); // i-1 to match the assistant output
-            messages.push({"role": "assistant", "content": answer});
+		if (answer.startsWith('您的内容中有不良信息')) {
+			answer = '提问词有敏感词';
+			messages.pop();
+		} else {
+			messages.push({"role": "assistant", "content": answer});
+		}
+            displayMessage(`O[${i-1}]: ${mMarked(answer)}`); // i-1 to match the assistant output
 
         } catch (error) {
             console.error('Error:', error);
@@ -106,7 +167,7 @@
 
     function displayMessage(message) {
         const chatDiv = document.getElementById('chat');
-        chatDiv.innerHTML += `<div>${message}<\/div>`;
+        chatDiv.innerHTML += `<div>${mMarked(message)}<\/div>`;
         chatDiv.scrollTop = chatDiv.scrollHeight; // Scroll to the bottom
     }
 </script>
