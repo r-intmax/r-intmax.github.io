@@ -345,10 +345,12 @@ function save(){
 		
 		currentData[word] = { ...wordData };
 	}
+	
+	const sortedData = Object.keys(currentData).sort().reduce((acc, key) => ({ ...acc, [key]: currentData[key] }), {});
 
     // 保存到 localStorage
     const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
-    Object.assign(newStoredData, currentData);
+    Object.assign(newStoredData, sortedData);
     localStorage.setItem('savedWords', JSON.stringify(newStoredData));
 }
 
@@ -368,6 +370,7 @@ function removeLoadingMessage() {
 }
 
 window.onload = function() {
+	localStorage.setItem('savedWords', JSON.stringify({}));
 	setInterval(save, 20000);
 	document.getElementById('importJsonFile').value = '';
 	showLoadingMessage();
@@ -417,12 +420,26 @@ document.getElementById("exportJson").addEventListener("click", function() {
             })
         );
 
+		function getFormattedDate() {
+			const date = new Date();
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+			const day = String(date.getDate()).padStart(2, '0');
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			const seconds = String(date.getSeconds()).padStart(2, '0');
+
+			return `${year}${month}${day}${hours}${minutes}${seconds}`;
+		}
+
+		const filename = `output_${getFormattedDate()}.json`;
+
         const beautifiedJson = JSON.stringify(filteredData, null, 4);
         const blob = new Blob([beautifiedJson], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'output.json';
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url); // 释放内存
     } else {
@@ -467,12 +484,19 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 	const baseWords = [];
 	
 	// 遍历 savedWords
-	for (const [w, wordData] of Object.entries(savedWords)) {
+	for (let [w, wordData] of Object.entries(savedWords)) {
 		if (wordData && typeof wordData === 'object') {  
 			for (const key in wordData) {
 				if (wordData.hasOwnProperty(key) && wordData[key] === '_base') {
-					baseWords.push(w); 
-					break; 
+					const wordDataEntry = allWords.find(([word]) => w === word);
+					for (const [partOfSpeech, definitions] of Object.entries(wordDataEntry[1])) {
+						if (definitions.includes(Object.keys(wordData)[0]) && partOfSpeech === 'verb') {
+							w = '_' + w;
+							break;
+						}
+					}
+					baseWords.push(w);
+					break;
 				}
 			}
 		}
@@ -485,7 +509,15 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 	// 将符合条件的单词添加到列表
 	baseWords.forEach(word => {
 		const li = document.createElement('li');
-		li.textContent = word;
+		
+		// 检查是否以下划线开头
+		if (word.startsWith('_')) {
+			li.textContent = word.slice(1); // 去掉下划线
+			li.style.backgroundColor = 'pink'; // 设置粉色背景
+		} else {
+			li.textContent = word; // 直接使用单词
+		}
+		
 		wordList.appendChild(li);
 	});
 	
