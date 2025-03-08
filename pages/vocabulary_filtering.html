@@ -370,7 +370,7 @@ function removeLoadingMessage() {
 }
 
 window.onload = function() {
-	localStorage.setItem('savedWords', JSON.stringify({}));
+	//localStorage.setItem('savedWords', JSON.stringify({}));
 	setInterval(save, 20000);
 	document.getElementById('importJsonFile').value = '';
 	showLoadingMessage();
