@@ -55,7 +55,7 @@ body {
 <button id="importJson" style="color: red;">导入</button>
 <input type="file" id="importJsonFile" accept=".json" /><br>
 <label for="startIndex">页码</label>
-<input type="number" id="startIndex" value="1" min="1">
+<input type="text" id="startIndex">
 <button id="loadJson">跳转</button><br>
 <div id="currentPage"></div><br>
 <div id="progressRatio"></div><br>
@@ -70,12 +70,81 @@ let saveList = [];
 let currentPageIndex = 0; // 当前页面索引
 
 // 加载 JSON 数据的事件监听
-document.getElementById("loadJson").addEventListener("click", function() {
+document.getElementById("loadJson").addEventListener("sclick", function() {
     // 获取输入的起始页码，并设置 currentPageIndex
     const startIndex = parseInt(document.getElementById("startIndex").value, 10);
     if (startIndex < 1) return; // 如果输入的值小于 1，直接返回
     currentPageIndex = startIndex - 1; // 因为索引是从 0 开始的
 	loadWords(); // 加载词汇
+});
+
+// 加载 JSON 数据的事件监听
+document.getElementById("loadJson").addEventListener("click", function() {
+    // 获取输入的值
+    const inputValue = document.getElementById("startIndex").value;
+    let startIndex;
+
+    // 检查输入是否为数字，且大于0
+    if (!isNaN(inputValue) && inputValue.trim() !== '') {
+        startIndex = parseInt(inputValue, 10);
+        if (startIndex > 0) {
+            currentPageIndex = startIndex - 1; // 页码转换为索引
+        } else {
+            return; // 如果输入的值小于1，直接返回
+        }
+    } else {
+    function levenshtein(a, b) {
+        const matrix = [];
+
+        // 初始化矩阵
+        for (let i = 0; i <= b.length; i++) {
+            matrix[i] = [i];
+        }
+        for (let j = 0; j <= a.length; j++) {
+            matrix[0][j] = j;
+        }
+
+        // 填充矩阵
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1]; // 字符相同
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // 替换
+                        matrix[i][j - 1] + 1,     // 插入
+                        matrix[i - 1][j] + 1      // 删除
+                    );
+                }
+            }
+        }
+
+        return matrix[b.length][a.length];
+    }
+
+    const searchWord = inputValue.trim();
+    let closestWord = null;
+    let minDistance = Infinity;
+
+    for (const [word] of allWords) {
+        // 确保字典单词以输入词作为前缀
+        if (word.startsWith(searchWord)) {
+            closestWord = word; // 直接匹配
+            break; // 找到第一个匹配的单词后即可停止查找
+        }
+    }
+
+    if (closestWord) {
+        // 计算该单词的页码
+        const index = allWords.findIndex(([word]) => word === closestWord);
+        currentPageIndex = Math.floor(index / 8); // 计算该单词的页码
+    } else {
+        alert('未找到匹配的字符串');
+        return;
+    }
+}
+
+    loadWords(); // 加载词汇
 });
 
 // 用于生成分类下拉框
