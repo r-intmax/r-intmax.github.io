@@ -27,8 +27,8 @@ body {
     position: fixed;
     top: 20px;
     left: 5px;
-    width: 95%; /* 可根据需要调整 */
-    max-height: 80vh; /* 最大高度为视口的80% */
+    width: 96%; /* 可根据需要调整 */
+    max-height: 95vh; /* 最大高度为视口的80% */
     background: white;
     border: 1px solid #ccc;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -58,6 +58,7 @@ body {
 <input type="number" id="startIndex" value="1" min="1">
 <button id="loadJson">跳转</button><br>
 <div id="currentPage"></div><br>
+<div id="progressRatio"></div><br>
 <div id="wordList"></div>
 <button id="savePage">保存并换到下一页</button>
 
@@ -346,6 +347,12 @@ function save(){
 		currentData[word] = { ...wordData };
 	}
 	
+	const totalWords = allWords.length; 
+	const savedWordsCount = Object.keys(currentData).length; 
+	const progressRatio = totalWords > 0 ? (savedWordsCount / totalWords) : 0;
+    const progressText = (progressRatio * 100).toFixed(2) + '%';
+    document.getElementById('progressRatio').innerText = '进度: ' + progressText;
+	
 	const sortedData = Object.keys(currentData).sort().reduce((acc, key) => ({ ...acc, [key]: currentData[key] }), {});
 
     // 保存到 localStorage
@@ -497,6 +504,9 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 					}
 					baseWords.push(w);
 					break;
+				} else if (wordData.hasOwnProperty(key) && wordData[key].startsWith('_category: ')){
+					baseWords.push('$' + w);
+					break;
 				}
 			}
 		}
@@ -514,6 +524,9 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 		if (word.startsWith('_')) {
 			li.textContent = word.slice(1); // 去掉下划线
 			li.style.backgroundColor = 'pink'; // 设置粉色背景
+		} else if (word.startsWith('$')) {
+			li.textContent = word.slice(1);
+			li.style.backgroundColor = 'lightblue'; 
 		} else {
 			li.textContent = word; // 直接使用单词
 		}
