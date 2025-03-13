@@ -65,6 +65,8 @@ body {
 <script>
 const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
 let allWords = [];
+let memItems = {};
+let addItems = {};
 let categories;
 let saveList = [];
 let currentPageIndex = 0; // 当前页面索引
@@ -175,6 +177,7 @@ function createCategorySelect(word, def, parentValueList = []) {
     selectElement.onchange = function() {
         // 清除下级下拉框（如果存在）
         while (selectElement.nextElementSibling) {
+			if (selectElement.nextElementSibling.className === 'add-word') break;
 			selectElement.parentNode.removeChild(selectElement.nextElementSibling);
 		}
 
@@ -230,7 +233,7 @@ function loadWord(word, wordListDiv) {
     wordItem.className = "word-item";
     wordItem.innerHTML = `<strong>${word}</strong><br>`;
 
-    const storedData = JSON.parse(localStorage.getItem('savedWords')) || {};
+    const storedData = memItems;
     const savedWordData = storedData[word] || {};
 
     for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
@@ -245,6 +248,7 @@ function loadWord(word, wordListDiv) {
                 <input type="hidden" name="${word}-${def}-category" value="" />
 				<label class="delete-btn"><input type="radio" name="${word}-${def}-options" value="delete" checked />删除</label>
 				<label class="base-btn"><input type="radio" name="${word}-${def}-options" value="base" />基</label>
+				<label class="select-btn"><input type="radio" name="${word}-${def}-options" value="select" />选择</label>
 				<label class="category-btn"><input type="radio" name="${word}-${def}-options" value="category" />分类</label>
             `;
 
@@ -256,6 +260,25 @@ function loadWord(word, wordListDiv) {
 			newSelectElement.style.display = 'none';
 			definitionDiv.appendChild(newSelectElement);
 
+			const span = document.createElement('span');
+			span.className = 'add-word';
+			span.textContent = '+';
+
+			const div = document.createElement('div');
+			div.className = 'plus';
+
+			definitionDiv.appendChild(span);
+			definitionDiv.appendChild(div);
+
+			const plusDiv = definitionDiv.querySelector('.plus');
+			
+			const plusWords = addItems[`${word}-${def}`];
+			if (plusWords){
+				plusWords.forEach(selectedWord => {
+					plusDiv.innerHTML += `<span class="clickable-word">${selectedWord}</span>`;
+				});
+			}
+
             // 更新输入框中的值
             if (savedWordData[def]) {
                 hiddenInputSelected.value = savedWordData[def] || ''; // 设置已选中的词
@@ -263,12 +286,11 @@ function loadWord(word, wordListDiv) {
                 // 更新UI中的选中状态
                 const selectedWords = hiddenInputSelected.value.split(', ');
                 selectedWords.forEach(selectedWord => {
-                    const clickableWord = Array.from(definitionDiv.querySelectorAll('.clickable-word')).find(el => el.innerText === selectedWord);
+                    const clickableWord = [...plusDiv.querySelectorAll('.clickable-word'), ...definitionDiv.querySelectorAll('.clickable-word')].find(el => el.innerText === selectedWord);
                     if (clickableWord) {
                         clickableWord.classList.add('selected'); // 添加选中状态
                     }
                 });
-				const buttons = definitionDiv.querySelectorAll('.delete-btn, .base-btn, .category-btn');
 				if (selectedWords[0] === '') {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="delete"]`).checked = true;
 				} else if (selectedWords[0] === '_base') {
@@ -276,11 +298,12 @@ function loadWord(word, wordListDiv) {
 				} else if (selectedWords[0].startsWith('_category: ')) {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="category"]`).checked = true;
 					hiddenInputCategory.value = selectedWords[0].slice('_category: '.length);
-					setTimeout(initCategory, 300);
+					setTimeout(initCategory, 50);
 				} else {
-					buttons.forEach(btn => btn.style.display = 'none');
+					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
 				}
             }
+
 			
 			function initCategory(){
 				document.getElementById(`${word}-${def}-category`).style.display = 'inline';
@@ -319,20 +342,21 @@ function loadWord(word, wordListDiv) {
 					selectedDiv.style.display = 'none';
 				}
 			}
-
+			
+			
+			
             // 添加单词点击事件
             definitionDiv.querySelectorAll('.clickable-word').forEach(span => {
                 span.addEventListener('click', function() {
+					const plusDiv = definitionDiv.querySelector('.plus');
 					removeCategory();
-                    this.classList.toggle('selected');
-                    const selectedWords = Array.from(definitionDiv.querySelectorAll('.clickable-word.selected')).map(el => el.innerText).join(', ');
-                    hiddenInputSelected.value = selectedWords;
-					const buttons = definitionDiv.querySelectorAll('.delete-btn, .base-btn, .category-btn');
+					this.classList.toggle('selected');
+					const selectedWords = [...plusDiv.querySelectorAll('.clickable-word.selected'), ...definitionDiv.querySelectorAll('.clickable-word.selected')].map(el => el.innerText).join(', ');
+					hiddenInputSelected.value = selectedWords;
 					if (selectedWords === '') {
 						definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="delete"]`).checked = true; // Set the delete radio as checked
-						buttons.forEach(btn => btn.style.display = 'inline-block'); 
 					} else {
-						buttons.forEach(btn => btn.style.display = 'none');
+						definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
 					}
                 });
 					
@@ -346,6 +370,12 @@ function loadWord(word, wordListDiv) {
             deleteBtn.addEventListener('click', function() {
 				removeCategory();
             });
+			
+			const selectBtn = definitionDiv.querySelector('.select-btn');
+            selectBtn.addEventListener('click', function() {
+				removeCategory();
+				hiddenInputSelected.value = '_select';
+            });
 
             const baseBtn = definitionDiv.querySelector('.base-btn');
             baseBtn.addEventListener('click', function() {
@@ -358,6 +388,42 @@ function loadWord(word, wordListDiv) {
                 removeCategory();
 				document.getElementById(`${word}-${def}-category`).style.display = 'inline';
             });
+
+
+			definitionDiv.querySelector('.add-word').addEventListener('click', function() {
+				const newWord = prompt("请输入新的单词：");
+				if (newWord) {
+					if (!addItems[`${word}-${def}`]) {
+						addItems[`${word}-${def}`] = [];
+					}
+					const item = addItems[`${word}-${def}`]; 
+					item.push(newWord);
+
+					const plusDiv = definitionDiv.querySelector('.plus');
+					plusDiv.innerHTML += `<span class="clickable-word">${newWord}</span>`;
+
+					plusDiv.querySelectorAll('.clickable-word').forEach(span => {
+						span.addEventListener('click', function() {
+							span.addEventListener('click', function() {
+								removeCategory();
+								this.classList.toggle('selected');
+								const selectedWords = [...plusDiv.querySelectorAll('.clickable-word.selected'), ...definitionDiv.querySelectorAll('.clickable-word.selected')].map(el => el.innerText).join(', ');
+								hiddenInputSelected.value = selectedWords;
+								if (selectedWords === '') {
+									definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="delete"]`).checked = true; // Set the delete radio as checked
+								} else {
+									definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
+								}
+							});
+						});
+							
+						span.addEventListener('dblclick', function() {
+							showDefinitionDialog(this.innerText); // Call the dialog
+						});
+					});
+					
+				}
+			});
 			
             wordItem.appendChild(definitionDiv);
             wordItem.appendChild(document.createElement('br'));
@@ -384,7 +450,7 @@ function loadWords() {
 }
 
 function save(){
-    const currentData = JSON.parse(localStorage.getItem('savedWords')) || {};
+    const currentData = memItems || {};
 	const newList = [];
 
 	// 遍历 saveList 中的每个词
@@ -424,10 +490,7 @@ function save(){
 	
 	const sortedData = Object.keys(currentData).sort().reduce((acc, key) => ({ ...acc, [key]: currentData[key] }), {});
 
-    // 保存到 localStorage
-    const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
-    Object.assign(newStoredData, sortedData);
-    localStorage.setItem('savedWords', JSON.stringify(newStoredData));
+	memItems = sortedData;
 }
 
 function showLoadingMessage() {
@@ -446,8 +509,17 @@ function removeLoadingMessage() {
 }
 
 window.onload = function() {
+	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
+	addItems = JSON.parse(localStorage.getItem('addedWords')) || {};
 	//localStorage.setItem('savedWords', JSON.stringify({}));
-	setInterval(save, 20000);
+	setInterval(() => {
+		const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
+		Object.assign(newStoredData, memItems);
+		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
+		const newAddedData = JSON.parse(localStorage.getItem('addedWords')) || {};
+		Object.assign(newAddedData, memItems);
+		localStorage.setItem('addedWords', JSON.stringify(newStoredData));
+	}, 20000);
 	document.getElementById('importJsonFile').value = '';
 	showLoadingMessage();
 	// 使用 Promise.all 来并行加载多个 JSON 文件
@@ -485,9 +557,9 @@ document.getElementById("savePage").addEventListener("click", function() {
 });
 
 document.getElementById("exportJson").addEventListener("click", function() {
-    const savedData = localStorage.getItem('savedWords');
+    const savedData = memItems;
     if (savedData) {
-        const parsedData = JSON.parse(savedData);
+        const parsedData = savedData;
         
         // 过滤掉值为空的词汇
         const filteredData = Object.fromEntries(
@@ -533,15 +605,9 @@ document.getElementById("importJson").addEventListener("click", function() {
         reader.onload = function(event) {
             try {
                 const data = JSON.parse(event.target.result);
-                // 根据你的需求，可以进行进一步的处理，比如过滤无效数据等
-                const validData = Object.fromEntries(
-                    Object.entries(data).filter(([word, meanings]) => {
-                        return Object.keys(meanings).length > 0; // 只保留非空对象
-                    })
-                );
-                
-                // 将有效数据存入 localStorage
-                localStorage.setItem('savedWords', JSON.stringify(validData));
+                console.log(data);
+				memItems = data;
+				
 				alert("导入成功！");
 				loadWords();
             } catch (error) {
@@ -556,7 +622,7 @@ document.getElementById("importJson").addEventListener("click", function() {
 });
 
 document.getElementById("showBaseWords").addEventListener("click", function() {
-	const savedWords = JSON.parse(localStorage.getItem('savedWords')) || {};
+	const savedWords = memItems || {};
 	const baseWords = [];
 	
 	// 遍历 savedWords
