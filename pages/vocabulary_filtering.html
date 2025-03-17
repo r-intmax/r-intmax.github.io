@@ -56,32 +56,25 @@ body {
 <input type="file" id="importJsonFile" accept=".json" /><br>
 <label for="startIndex">页码</label>
 <input type="text" id="startIndex">
-<button id="loadJson">跳转</button><br>
+<button id="jump">跳转</button><br>
 <div id="currentPage"></div><br>
 <div id="progressRatio"></div><br>
+<div id="displayContainer"></div><br>
 <div id="wordList"></div>
-<button id="savePage">保存并换到下一页</button>
+<button id="nextPage">下一页</button>
 
 <script>
 const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
 let allWords = [];
-let memItems = {};
-let addItems = {};
+var memItems = {};
 let categories;
-let saveList = [];
+var explain = {};
 let currentPageIndex = 0; // 当前页面索引
+let lastPageIndex = currentPageIndex;
 
-// 加载 JSON 数据的事件监听
-document.getElementById("loadJson").addEventListener("sclick", function() {
-    // 获取输入的起始页码，并设置 currentPageIndex
-    const startIndex = parseInt(document.getElementById("startIndex").value, 10);
-    if (startIndex < 1) return; // 如果输入的值小于 1，直接返回
-    currentPageIndex = startIndex - 1; // 因为索引是从 0 开始的
-	loadWords(); // 加载词汇
-});
+function print(e) {console.log(e);}
 
-// 加载 JSON 数据的事件监听
-document.getElementById("loadJson").addEventListener("click", function() {
+document.getElementById("jump").addEventListener("click", function() {
     // 获取输入的值
     const inputValue = document.getElementById("startIndex").value;
     let startIndex;
@@ -149,8 +142,7 @@ document.getElementById("loadJson").addEventListener("click", function() {
     loadWords(); // 加载词汇
 });
 
-// 用于生成分类下拉框
-function createCategorySelect(word, def, parentValueList = []) {
+function createCategorySelect(word, def, div, parentValueList = []) {
     let options = [];
     let level = parentValueList.length;
 
@@ -177,7 +169,7 @@ function createCategorySelect(word, def, parentValueList = []) {
     selectElement.onchange = function() {
         // 清除下级下拉框（如果存在）
         while (selectElement.nextElementSibling) {
-			if (selectElement.nextElementSibling.className === 'add-word') break;
+//			if (selectElement.nextElementSibling.className === 'Explain') break;
 			selectElement.parentNode.removeChild(selectElement.nextElementSibling);
 		}
 
@@ -185,14 +177,15 @@ function createCategorySelect(word, def, parentValueList = []) {
         const newParentValueList = [...parentValueList, selectElement.value];
 
         if (newParentValueList.length < 3) {
-			const nextLevelSelect = createCategorySelect(word, def, newParentValueList);
+			const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
 			selectElement.after(nextLevelSelect); // 使用 after 方法添加在当前 select 后
 		}
 		
 		const combinedCategory = newParentValueList.join('-');
-		const value = document.querySelector(`input[name="${word}-${def}-category"]`).value;
+		const value = memItems[word][def];
 		if (!value.startsWith(combinedCategory)) {
-			document.querySelector(`input[name="${word}-${def}-category"]`).value = combinedCategory;
+			memItems[word][def] = '_category: ' + combinedCategory;
+			updateModified(word, def, div);
 		}
     };
 
@@ -204,7 +197,6 @@ function showDefinitionDialog(word) {
     const wordDataEntry = allWords.find(([w]) => w === word);
     const dialogDiv = document.createElement('div');
     dialogDiv.className = 'dialog'; // 对话框样式
-	saveList.push(word);
 
     dialogDiv.innerHTML = `<h2>${word}</h2><button class="close-btn">关闭</button>`;
     if (wordDataEntry) {
@@ -218,9 +210,8 @@ function showDefinitionDialog(word) {
 
     // 关闭按钮逻辑
     dialogDiv.querySelector('.close-btn').addEventListener('click', () => {
-		save();
-		saveList.pop();
         dialogDiv.remove();
+		explain[word] = {};
     });
 }
 
@@ -244,49 +235,31 @@ function loadWord(word, wordListDiv) {
             definitionDiv.innerHTML = `
                 <strong>${partOfSpeech}:</strong><br>
                 - ${words}<br>
-                <input type="hidden" name="${word}-${def}-selected" value="" />
-                <input type="hidden" name="${word}-${def}-category" value="" />
 				<label class="delete-btn"><input type="radio" name="${word}-${def}-options" value="delete" checked />删除</label>
 				<label class="base-btn"><input type="radio" name="${word}-${def}-options" value="base" />基</label>
 				<label class="select-btn"><input type="radio" name="${word}-${def}-options" value="select" />选择</label>
+				<label class="attr-btn"><input type="radio" name="${word}-${def}-options" value="attr" />属性</label>
 				<label class="category-btn"><input type="radio" name="${word}-${def}-options" value="category" />分类</label>
             `;
 
-            const hiddenInputSelected = definitionDiv.querySelector(`input[name="${word}-${def}-selected"]`);
-            const hiddenInputCategory = definitionDiv.querySelector(`input[name="${word}-${def}-category"]`);
+			const exDiv = document.createElement('div');
+			exDiv.className = 'explain';
+			definitionDiv.appendChild(exDiv);
+			const explainDiv = definitionDiv.querySelector('.explain');
 
-			const newSelectElement = createCategorySelect(word, def);
+			const newSelectElement = createCategorySelect(word, def, explainDiv);
 			newSelectElement.id = `${word}-${def}-category`;
 			newSelectElement.style.display = 'none';
 			definitionDiv.appendChild(newSelectElement);
 
-			const span = document.createElement('span');
-			span.className = 'add-word';
-			span.textContent = '+';
-
-			const div = document.createElement('div');
-			div.className = 'plus';
-
-			definitionDiv.appendChild(span);
-			definitionDiv.appendChild(div);
-
-			const plusDiv = definitionDiv.querySelector('.plus');
-			
-			const plusWords = addItems[`${word}-${def}`];
-			if (plusWords){
-				plusWords.forEach(selectedWord => {
-					plusDiv.innerHTML += `<span class="clickable-word">${selectedWord}</span>`;
-				});
-			}
-
             // 更新输入框中的值
             if (savedWordData[def]) {
-                hiddenInputSelected.value = savedWordData[def] || ''; // 设置已选中的词
-                hiddenInputCategory.value = '';
+                const value = savedWordData[def] || ''; // 设置已选中的词
+				
                 // 更新UI中的选中状态
-                const selectedWords = hiddenInputSelected.value.split(', ');
+                const selectedWords = value.split(', ');
                 selectedWords.forEach(selectedWord => {
-                    const clickableWord = [...plusDiv.querySelectorAll('.clickable-word'), ...definitionDiv.querySelectorAll('.clickable-word')].find(el => el.innerText === selectedWord);
+                    const clickableWord = [...definitionDiv.querySelectorAll('.clickable-word')].find(el => el.innerText === selectedWord);
                     if (clickableWord) {
                         clickableWord.classList.add('selected'); // 添加选中状态
                     }
@@ -297,18 +270,17 @@ function loadWord(word, wordListDiv) {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="base"]`).checked = true;
 				} else if (selectedWords[0].startsWith('_category: ')) {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="category"]`).checked = true;
-					hiddenInputCategory.value = selectedWords[0].slice('_category: '.length);
 					setTimeout(initCategory, 50);
 				} else {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
 				}
+				updateModified(word, def, explainDiv);
             }
-
 			
 			function initCategory(){
 				document.getElementById(`${word}-${def}-category`).style.display = 'inline';
 				
-				const categoryString = hiddenInputCategory.value;
+				const categoryString = memItems[word][def].split(', ')[0].slice('_category: '.length);
 				const categoriesArray = categoryString.split('-').map(item => item.trim());
 				let currentSelect = document.getElementById(`${word}-${def}-category`);
 
@@ -326,8 +298,7 @@ function loadWord(word, wordListDiv) {
 			}
 			
 			function removeCategory(){
-				hiddenInputCategory.value = '';
-				hiddenInputSelected.value = '';
+				memItems[word][def] = '';
 				const selectedDiv = document.getElementById(`${word}-${def}-category`);
     
 				if (selectedDiv) {
@@ -342,22 +313,21 @@ function loadWord(word, wordListDiv) {
 					selectedDiv.style.display = 'none';
 				}
 			}
-			
-			
-			
+					
             // 添加单词点击事件
             definitionDiv.querySelectorAll('.clickable-word').forEach(span => {
                 span.addEventListener('click', function() {
 					const plusDiv = definitionDiv.querySelector('.plus');
 					removeCategory();
 					this.classList.toggle('selected');
-					const selectedWords = [...plusDiv.querySelectorAll('.clickable-word.selected'), ...definitionDiv.querySelectorAll('.clickable-word.selected')].map(el => el.innerText).join(', ');
-					hiddenInputSelected.value = selectedWords;
+					const selectedWords = [...definitionDiv.querySelectorAll('.clickable-word.selected')].map(el => el.innerText).join(', ');
+					memItems[word][def] = selectedWords;
 					if (selectedWords === '') {
 						definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="delete"]`).checked = true; // Set the delete radio as checked
 					} else {
 						definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
 					}
+					updateModified(word, def, explainDiv);
                 });
 					
 				span.addEventListener('dblclick', function() {
@@ -366,167 +336,280 @@ function loadWord(word, wordListDiv) {
             });
 
             // 添加按钮的事件
-            const deleteBtn = definitionDiv.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', function() {
+            definitionDiv.querySelector('.delete-btn').addEventListener('click', function() {
 				removeCategory();
+				updateModified(word, def, explainDiv);
             });
 			
-			const selectBtn = definitionDiv.querySelector('.select-btn');
-            selectBtn.addEventListener('click', function() {
+			definitionDiv.querySelector('.select-btn').addEventListener('click', function() {
 				removeCategory();
-				hiddenInputSelected.value = '_select';
+				memItems[word][def] = '_select';
+				updateModified(word, def, explainDiv);
             });
 
-            const baseBtn = definitionDiv.querySelector('.base-btn');
-            baseBtn.addEventListener('click', function() {
+            definitionDiv.querySelector('.base-btn').addEventListener('click', function() {
 				removeCategory();
-                hiddenInputSelected.value = '_base'; // 设置为 base
+                memItems[word][def] = '_base'; // 设置为 base
+				updateModified(word, def, explainDiv);
+            });
+			
+			definitionDiv.querySelector('.attr-btn').addEventListener('click', function() {
+				const newWord = prompt("请输入属性词：");
+				if (Object.values(memItems[newWord]).some(value => value.startsWith('_'))){
+					removeCategory();
+					memItems[word][def] = '_attr: ' + newWord;
+					updateModified(word, def, explainDiv);
+				} else {
+					alert("该词不是基词");
+				}
             });
 
-            const categoryBtn = definitionDiv.querySelector('.category-btn');
-            categoryBtn.addEventListener('click', function() {
+            definitionDiv.querySelector('.category-btn').addEventListener('click', function() {
                 removeCategory();
+				updateModified(word, def, explainDiv);
 				document.getElementById(`${word}-${def}-category`).style.display = 'inline';
             });
 
-
-			definitionDiv.querySelector('.add-word').addEventListener('click', function() {
-				const newWord = prompt("请输入新的单词：");
-				if (newWord) {
-					if (!addItems[`${word}-${def}`]) {
-						addItems[`${word}-${def}`] = [];
-					}
-					const item = addItems[`${word}-${def}`]; 
-					item.push(newWord);
-
-					const plusDiv = definitionDiv.querySelector('.plus');
-					plusDiv.innerHTML += `<span class="clickable-word">${newWord}</span>`;
-
-					plusDiv.querySelectorAll('.clickable-word').forEach(span => {
-						span.addEventListener('click', function() {
-							span.addEventListener('click', function() {
-								removeCategory();
-								this.classList.toggle('selected');
-								const selectedWords = [...plusDiv.querySelectorAll('.clickable-word.selected'), ...definitionDiv.querySelectorAll('.clickable-word.selected')].map(el => el.innerText).join(', ');
-								hiddenInputSelected.value = selectedWords;
-								if (selectedWords === '') {
-									definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="delete"]`).checked = true; // Set the delete radio as checked
-								} else {
-									definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
-								}
-							});
-						});
-							
-						span.addEventListener('dblclick', function() {
-							showDefinitionDialog(this.innerText); // Call the dialog
-						});
-					});
-					
-				}
-			});
-			
             wordItem.appendChild(definitionDiv);
             wordItem.appendChild(document.createElement('br'));
         });
     }
     wordListDiv.appendChild(wordItem);
 }
-// 加载多个词
+
 function loadWords() {
 	const article = 8;
     const startIndex = currentPageIndex * article;
     const wordListDiv = document.getElementById("wordList");
     const currentPageDiv = document.getElementById("currentPage");
     wordListDiv.innerHTML = ''; // 清空之前的内容
-	saveList.length = 0;
 
     const wordsToDisplay = allWords.slice(startIndex, startIndex + article);
     wordsToDisplay.forEach(([word]) => {
         loadWord(word, wordListDiv);
-		saveList.push(word);
     });
+	
+	if (lastPageIndex !== currentPageIndex) {
+		allWords.slice(lastPageIndex * article, (lastPageIndex + 1) * article).forEach(([word]) => {
+			explain[word] = {};
+		});
+		lastPageIndex = currentPageIndex;
+	}
 
     currentPageDiv.innerHTML = `这是第 ${currentPageIndex + 1} 页`;
-}
-
-function save(){
-    const currentData = memItems || {};
-	const newList = [];
-
-	// 遍历 saveList 中的每个词
-	for (const word of saveList) {
-		const found = allWords.find(([w]) => w === word);
-		if (found) {
-			newList.push(found);
-		}
-	}
-    
-	for (const [word, meanings] of newList) {
-		const wordData = {};
-		
-		for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
-			definitions.forEach(def => {
-				const selectedInput = document.querySelector(`input[name="${word}-${def}-selected"]`);
-				let selectedWords = selectedInput ? selectedInput.value : '';
-				const categoryInput = document.querySelector(`input[name="${word}-${def}-category"]`);
-				if (categoryInput.value.length > 0) {
-					selectedWords = '_category: ' + categoryInput.value;
-				}
-				
-				if (selectedWords.length > 0) {
-					wordData[def] = selectedWords;
-				}
-			});
-		}
-		
-		currentData[word] = { ...wordData };
-	}
 	
 	const totalWords = allWords.length; 
-	const savedWordsCount = Object.keys(currentData).length; 
+	const savedWordsCount = Object.keys(memItems).length; 
 	const progressRatio = totalWords > 0 ? (savedWordsCount / totalWords) : 0;
     const progressText = (progressRatio * 100).toFixed(2) + '%';
     document.getElementById('progressRatio').innerText = '进度: ' + progressText;
-	
-	const sortedData = Object.keys(currentData).sort().reduce((acc, key) => ({ ...acc, [key]: currentData[key] }), {});
-
-	memItems = sortedData;
 }
 
-function showLoadingMessage() {
-    // 创建一个简单的加载消息元素
-    const loadingMessage = document.createElement('div');
-    loadingMessage.id = 'loading-message';
-    loadingMessage.innerText = '正在加载...';
-    document.body.appendChild(loadingMessage); // 添加到页面底部
+function initWord(word) {
+	function getItemStyle(word, def) {
+		if (!memItems[word]) return 'lightcoral';
+		if (memItems[word][def] && memItems[word][def].startsWith('_')) return 'lightgreen';
+		return Object.keys(memItems[word]).length > 1 ? '#FFFF00' : 'transparent';
+	}
+	const definitions = memItems[word] ? Object.keys(memItems[word])[0] : null;
+	return { word: word, style: getItemStyle(word, definitions), def: definitions };
 }
 
-function removeLoadingMessage() {
-    const loadingMessage = document.getElementById('loading-message');
-    if (loadingMessage) {
-        document.body.removeChild(loadingMessage); // 移除加载消息
+const initExplanation = (word, def, depth = -1) => {
+    const stack = [];
+    const visited = new Set();
+    const result = [];
+    const MAX_DEPTH = 15;
+    
+	if (depth === -1) {
+		depth++;
+		result[depth] = [];
+		if (!memItems[word][def]) return result;
+		memItems[word][def].split(', ').forEach(keyword => {
+			result[depth].push(initWord(keyword));
+			visited.add(keyword);
+		});
+	} else {
+		result[depth] = explain[word][def][depth];
+	}
+
+    let levelUpdated = true;
+    while (levelUpdated && depth < MAX_DEPTH) {
+        levelUpdated = false;
+        depth++;
+        
+        if (!result[depth]) result[depth] = [];
+        const preRes = result[depth - 1];
+
+        preRes.forEach(({word, style, def}) => {
+            const struct = memItems[word];
+            if (struct && Object.keys(struct).length > 0) {
+                const key = struct[def].split(', ');
+                if (!key[0].startsWith('_')) {
+                    levelUpdated = true;
+                    key.forEach(keyword => {
+                        if (!visited.has(keyword)) {
+                            result[depth].push(initWord(keyword));
+                            visited.add(keyword);
+                        }
+                    });
+                } else {
+                    result[depth].push({ word: word, style: "lightgreen", def: def })
+                }
+            } else {
+                result[depth].push({ word: word, style: "lightcoral" })
+            }
+        });
+    }
+
+	result.pop();
+
+    return result;
+};
+
+function updateModified(word, def, div, level = -1) {
+	const modified = initExplanation(word, def, level);
+	if (!explain[word]) {
+		explain[word] = {};
+	} 
+	if (!explain[word][def]) {
+		explain[word][def] = initExplanation(word, def);
+	}
+	explain[word][def].length = modified.length;
+	for (let depth = 0; depth < modified.length; depth++) {
+		const currentLayer = modified[depth];
+		if (!currentLayer) continue;
+		explain[word][def][depth] = currentLayer;
+	}
+	displayDefinitions(word, def, div);
+}
+
+function displayDefinitions(word, def, div) {
+    const structure = explain[word][def];
+    div.innerHTML = '';
+	const layerTotel = structure.length;
+    
+    structure.forEach((layer, level) => {
+        const layerDiv = document.createElement('div');
+        layerDiv.className = `layer-${level}`;
+        
+        layer.forEach((item, index) => {
+            const itemDiv = document.createElement('span');
+            itemDiv.textContent = item.word;
+            itemDiv.style = `background:${item.style}; margin:5px;`;
+            
+            // 添加操作按钮
+            ['-', '0', '+', 'd'].forEach(action => {
+				if (action === 'd' && item.style !== '#FFFF00') return;
+                const btn = document.createElement('button');
+                btn.textContent = action;
+                btn.onclick = () => {
+					if (action === 'd') {
+						const defDiv = document.createElement('div');
+						defDiv.className = 'dialog';
+						defDiv.innerHTML = `<h2>Select '${item.word}' meaning</h2>`;
+						
+						const meanings = memItems[item.word];
+						Object.keys(memItems[item.word]).forEach(key => {
+							const option = document.createElement('div');
+							option.textContent = key;
+							option.className = 'option';
+							option.onclick = function () {
+								const selectedKey = this.textContent;
+								modifyExplain(word, def, level, index, 0, selectedKey);
+								updateModified(word, def, div, level);
+								document.body.removeChild(defDiv);
+							};
+							defDiv.appendChild(option);
+						});
+						document.body.appendChild(defDiv);
+					} else {
+						modifyExplain(word, def, level, index, 
+							action === '+' ? 1 : action === '-' ? -1 : action === '0'? null : 0,
+							null
+						);
+						updateModified(word, def, div, level);
+					}
+				}
+                layerDiv.appendChild(btn);
+            });
+			
+			itemDiv.addEventListener('dblclick', () => showDefinitionDialog(item.word));
+            
+            layerDiv.appendChild(itemDiv);
+        });
+		
+		const addbtn = document.createElement('button');
+		addbtn.textContent = '+';
+		addbtn.onclick = () => {
+			const keyword = prompt("请输入新的单词：");
+			if (keyword) {
+				explain[word][def][level].push(keyword);
+				updateModified(word, def, level, div);
+			}
+		};
+		layerDiv.appendChild(addbtn);
+		
+		const surebtn = document.createElement('button');
+		surebtn.textContent = 's';
+		surebtn.onclick = () => {
+			const result = explain[word][def][level].map(item => item.word).join(', ');
+			memItems[word][def] = result;
+			updateModified(word, def, div);
+		};
+		layerDiv.appendChild(surebtn);
+        
+        div.appendChild(layerDiv);
+    });
+}
+
+function modifyExplain(word, def, layerNum, itemIndex, move = 0, newDef = null) {
+    const structure = explain[word][def];
+    const layer = structure[layerNum];
+    const target = layer[itemIndex];
+    
+    // 处理移动顺序
+    if (move === null) {
+		layer.splice(itemIndex, 1);
+	} else if (move !== 0) {
+        const newPos = itemIndex + move;
+        if (newPos >= 0 && newPos < layer.length) {
+            [layer[itemIndex], layer[newPos]] = [layer[newPos], layer[itemIndex]];
+        }
+    }
+    
+    // 处理定义修改
+    if (newDef) {
+        target.def = newDef;
+        const newSub = initExplanation(target.word, newDef);
+        structure.splice(layerNum+1, Infinity, ...newSub.slice(1));
     }
 }
 
 window.onload = function() {
+	
 	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
-	addItems = JSON.parse(localStorage.getItem('addedWords')) || {};
 	//localStorage.setItem('savedWords', JSON.stringify({}));
 	setInterval(() => {
 		const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
 		Object.assign(newStoredData, memItems);
 		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
-		const newAddedData = JSON.parse(localStorage.getItem('addedWords')) || {};
-		Object.assign(newAddedData, memItems);
-		localStorage.setItem('addedWords', JSON.stringify(newStoredData));
 	}, 20000);
+	
 	document.getElementById('importJsonFile').value = '';
-	showLoadingMessage();
+	
+	const loadingMessage = document.createElement('div');
+	loadingMessage.id = 'loading-message';
+	loadingMessage.innerText = '正在加载...';
+	document.body.appendChild(loadingMessage); // 添加到页面底部
+
 	// 使用 Promise.all 来并行加载多个 JSON 文件
     Promise.all([
         fetch(proxy + 'https://r-intmax.github.io/data/dict.json'),
         fetch(proxy + 'https://r-intmax.github.io/data/classification.json')
-    ])
+		//fetch("http://localhost/dict.json"),
+		//fetch("http://localhost/classification.json")
+	])
     .then(responses => {
         // 检查每个响应是否成功
         if (!responses[0].ok || !responses[1].ok) {
@@ -539,21 +622,16 @@ window.onload = function() {
         categories = data[1]; // 第二个JSON对象
     })
 	.finally(() => {
-		removeLoadingMessage();
-	})
+		const loadingMessage = document.getElementById('loading-message');
+		document.body.removeChild(loadingMessage);
+		loadWords();
+	});
 };
 
-document.getElementById("savePage").addEventListener("click", function() {
-	save();
-
-    // 增加页面索引并加载下一页
+document.getElementById("nextPage").addEventListener("click", function() {
     currentPageIndex++;
     loadWords();
-	
-	// 将页面滚动到顶部
-	window.scrollTo({
-		top: 0
-	});
+	window.scrollTo({ top: 0 });
 });
 
 document.getElementById("exportJson").addEventListener("click", function() {
@@ -605,9 +683,7 @@ document.getElementById("importJson").addEventListener("click", function() {
         reader.onload = function(event) {
             try {
                 const data = JSON.parse(event.target.result);
-                console.log(data);
 				memItems = data;
-				
 				alert("导入成功！");
 				loadWords();
             } catch (error) {
@@ -631,16 +707,20 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 			for (const key in wordData) {
 				if (wordData.hasOwnProperty(key) && wordData[key] === '_base') {
 					const wordDataEntry = allWords.find(([word]) => w === word);
+					let color = 'transparent';
 					for (const [partOfSpeech, definitions] of Object.entries(wordDataEntry[1])) {
 						if (definitions.includes(Object.keys(wordData)[0]) && partOfSpeech === 'verb') {
-							w = '_' + w;
+							color = 'pink';
 							break;
 						}
 					}
-					baseWords.push(w);
+					baseWords.push({word: w, color: color});
 					break;
-				} else if (wordData.hasOwnProperty(key) && wordData[key].startsWith('_category: ')){
-					baseWords.push('$' + w);
+				} else if (wordData.hasOwnProperty(key) && wordData[key].startsWith('_category')){
+					baseWords.push({word: w, color: 'lightblue'});
+					break;
+				} else if (wordData.hasOwnProperty(key) && wordData[key].startsWith('_attr')){
+					baseWords.push({word: w, color: 'lightgreen'});
 					break;
 				}
 			}
@@ -648,26 +728,17 @@ document.getElementById("showBaseWords").addEventListener("click", function() {
 	}
 	
 	const wordList = document.createElement('div');
-	wordList.innerHTML = '<h2>基词表</h2><button class="close-btn">关闭</button>';
+	wordList.innerHTML = '<h2>基词表</h2>';
 	wordList.className = 'dialog';
 
-	// 将符合条件的单词添加到列表
-	baseWords.forEach(word => {
+	baseWords.forEach(({word, color}) => {
 		const li = document.createElement('li');
-		
-		// 检查是否以下划线开头
-		if (word.startsWith('_')) {
-			li.textContent = word.slice(1); // 去掉下划线
-			li.style.backgroundColor = 'pink'; // 设置粉色背景
-		} else if (word.startsWith('$')) {
-			li.textContent = word.slice(1);
-			li.style.backgroundColor = 'lightblue'; 
-		} else {
-			li.textContent = word; // 直接使用单词
-		}
-		
+		li.textContent = word;
+		li.style.backgroundColor = color;
 		wordList.appendChild(li);
 	});
+	
+	wordList.innerHTML += '<button class="close-btn">关闭</button>';
 	
 	document.body.appendChild(wordList);
 
