@@ -225,6 +225,7 @@ function loadWord(word, wordListDiv) {
 
     const storedData = memItems;
     const savedWordData = storedData[word] || {};
+	if (!memItems[word]) memItems[word] = {};
 
     for (const [partOfSpeech, definitions] of Object.entries(meanings)) {
         definitions.forEach(def => {
