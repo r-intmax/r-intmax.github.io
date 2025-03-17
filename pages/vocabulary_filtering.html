@@ -544,8 +544,8 @@ function displayDefinitions(word, def, div) {
 		addbtn.onclick = () => {
 			const keyword = prompt("请输入新的单词：");
 			if (keyword) {
-				explain[word][def][level].push(keyword);
-				updateModified(word, def, level, div);
+				explain[word][def][level].push(initWord(keyword));
+				updateModified(word, def, div, level);
 			}
 		};
 		layerDiv.appendChild(addbtn);
