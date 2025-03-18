@@ -639,8 +639,8 @@ window.onload = function() {
 	loadingMessage.innerText = '正在加载...';
 	document.body.appendChild(loadingMessage);
 	
-	fetch("http://localhost/dict.json")
-    //fetch(proxy + 'https://r-intmax.github.io/data/dict.json')
+	//fetch("http://localhost/dict.json")
+    fetch(proxy + 'https://r-intmax.github.io/data/dict.json')
     .then(response => {
         if (!response.ok) {
             throw new Error('网络响应不是 OK');
