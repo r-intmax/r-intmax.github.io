@@ -188,7 +188,7 @@ function createCategorySelect(word, def, div, parentValueList = []) {
 			const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
 			selectElement.after(nextLevelSelect);
 			combinedCategory = newParentValueList.join('-');
-			currentCategories[selectElement.value] = {};
+			//currentCategories[selectElement.value] = {};
 		}
 	    
 		if (!memItems[word][def].startsWith(combinedCategory)) {
