@@ -182,15 +182,19 @@ function createCategorySelect(word, def, div, parentValueList = []) {
 		}
 
         // 创建新的分类列表
-        const newParentValueList = [...parentValueList, selectElement.value];
-		const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
-		selectElement.after(nextLevelSelect);
-		const combinedCategory = newParentValueList.join('-');
-		const value = memItems[word][def];
-		if (!value.startsWith(combinedCategory)) {
+		let combinedCategory = parentValueList.join('-');
+		if (selectElement.value !== ''){
+			const newParentValueList = [...parentValueList, selectElement.value];
+			const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
+			selectElement.after(nextLevelSelect);
+			combinedCategory = newParentValueList.join('-');
+		}
+		
+		if (!memItems[word][def].startsWith(combinedCategory)) {
 			memItems[word][def] = '_attr: root-' + combinedCategory;
 			updateModified(word, def, div);
 		}
+		
     };
 
     return selectElement;
@@ -628,7 +632,6 @@ window.onload = function() {
 		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
 	}, 20000);
 	categories = initCategories();
-	console.log(categories);
 	
 	document.getElementById('importJsonFile').value = '';
 	
