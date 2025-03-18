@@ -50,7 +50,6 @@ body {
 <body>
     <h2>词汇净化</h2>
 
-<button id="showBaseWords">展示基</button>
 <button id="exportJson">导出</button>
 <button id="importJson" style="color: red;">导入</button>
 <input type="file" id="importJsonFile" accept=".json" /><br>
@@ -70,8 +69,6 @@ let categories;
 var explain = {};
 let currentPageIndex = 0; // 当前页面索引
 let lastPageIndex = currentPageIndex;
-
-function print(e) {console.log(e);}
 
 document.getElementById("jump").addEventListener("click", function() {
     // 获取输入的值
@@ -141,49 +138,57 @@ document.getElementById("jump").addEventListener("click", function() {
     loadWords(); // 加载词汇
 });
 
-function createCategorySelect(word, def, div, parentValueList = []) {
-    let options = [];
-    let level = parentValueList.length;
-
-    if (level === 0) {
-        options = Object.keys(categories);
-    } else if (level === 1 && parentValueList[0] in categories) {
-        options = Object.keys(categories[parentValueList[0]]);
-    } else if (level === 2 && parentValueList[0] in categories && parentValueList[1] in categories[parentValueList[0]]) {
-        options = categories[parentValueList[0]][parentValueList[1]];
-    } else {
-		return '';
+function initCategoryOptions(div, options) {
+	if (options.length === 0) {
+		div.innerHTML = ``; 
+		div.className = 'select';
+		return;
 	}
-
-	const selectElement = document.createElement('select');
-	selectElement.innerHTML = `<option value="">选择分类</option>`; // 提供选择提示
+	div.innerHTML = `<option value="">选择分类</option>`; // 提供选择提示
+	div.className = 'select';
 
 	options.forEach(optionValue => {
 		const optionElement = document.createElement('option');
 		optionElement.value = optionValue; 
 		optionElement.innerHTML = optionValue;
-		selectElement.appendChild(optionElement);
+		div.appendChild(optionElement);
 	});
+}
+
+function createCategorySelect(word, def, div, parentValueList = []) {
+
+    let options = [];
+    let level = parentValueList.length;
+
+    let currentCategories = categories;
+    for (let i = 0; i < level; i++) {
+        const parentValue = parentValueList[i];
+        if (!(parentValue in currentCategories)) {
+            return '';
+        }
+        currentCategories = currentCategories[parentValue];
+    }
+
+    options = Object.keys(currentCategories);
+
+	const selectElement = document.createElement('select');
+	initCategoryOptions(selectElement, options);
 
     selectElement.onchange = function() {
         // 清除下级下拉框（如果存在）
         while (selectElement.nextElementSibling) {
-//			if (selectElement.nextElementSibling.className === 'Explain') break;
+			if (selectElement.nextElementSibling.className !== 'select') break;
 			selectElement.parentNode.removeChild(selectElement.nextElementSibling);
 		}
 
         // 创建新的分类列表
         const newParentValueList = [...parentValueList, selectElement.value];
-
-        if (newParentValueList.length < 3) {
-			const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
-			selectElement.after(nextLevelSelect); // 使用 after 方法添加在当前 select 后
-		}
-		
+		const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
+		selectElement.after(nextLevelSelect);
 		const combinedCategory = newParentValueList.join('-');
 		const value = memItems[word][def];
 		if (!value.startsWith(combinedCategory)) {
-			memItems[word][def] = '_category: ' + combinedCategory;
+			memItems[word][def] = '_attr: root-' + combinedCategory;
 			updateModified(word, def, div);
 		}
     };
@@ -236,10 +241,8 @@ function loadWord(word, wordListDiv) {
                 <strong>${partOfSpeech}:</strong><br>
                 - ${words}<br>
 				<label class="delete-btn"><input type="radio" name="${word}-${def}-options" value="delete" checked />删除</label>
-				<label class="base-btn"><input type="radio" name="${word}-${def}-options" value="base" />基</label>
 				<label class="select-btn"><input type="radio" name="${word}-${def}-options" value="select" />选择</label>
-				<label class="attr-btn"><input type="radio" name="${word}-${def}-options" value="attr" />属性</label>
-				<label class="category-btn"><input type="radio" name="${word}-${def}-options" value="category" />分类</label>
+				<label class="attr-btn"><input type="radio" name="${word}-${def}-options" value="attr" />属性</label><br><br>
             `;
 
 			const exDiv = document.createElement('div');
@@ -266,10 +269,8 @@ function loadWord(word, wordListDiv) {
                 });
 				if (selectedWords[0] === '') {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="delete"]`).checked = true;
-				} else if (selectedWords[0] === '_base') {
-					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="base"]`).checked = true;
-				} else if (selectedWords[0].startsWith('_category: ')) {
-					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="category"]`).checked = true;
+				} else if (selectedWords[0].startsWith('_attr: ')) {
+					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="attr"]`).checked = true;
 					setTimeout(initCategory, 50);
 				} else {
 					definitionDiv.querySelector(`input[name="${word}-${def}-options"][value="select"]`).checked = true;
@@ -280,7 +281,7 @@ function loadWord(word, wordListDiv) {
 			function initCategory(){
 				document.getElementById(`${word}-${def}-category`).style.display = 'inline';
 				
-				const categoryString = memItems[word][def].split(', ')[0].slice('_category: '.length);
+				const categoryString = memItems[word][def].split(', ')[0].slice('_attr: root-'.length);
 				const categoriesArray = categoryString.split('-').map(item => item.trim());
 				let currentSelect = document.getElementById(`${word}-${def}-category`);
 
@@ -293,6 +294,7 @@ function loadWord(word, wordListDiv) {
 							}
 						}
 					}
+					if (!currentSelect.nextElementSibling) break;
 					currentSelect = currentSelect.nextElementSibling;
 				}
 			}
@@ -302,19 +304,12 @@ function loadWord(word, wordListDiv) {
 				const selectedDiv = document.getElementById(`${word}-${def}-category`);
     
 				if (selectedDiv) {
-					selectedDiv.innerHTML = `<option value="">选择分类</option>`
-					Object.keys(categories).forEach(optionValue => {
-						const optionElement = document.createElement('option');
-						optionElement.value = optionValue; 
-						optionElement.innerHTML = optionValue;
-						selectedDiv.appendChild(optionElement);
-					});
+					initCategoryOptions(selectedDiv, Object.keys(categories));
 					selectedDiv.onchange();
 					selectedDiv.style.display = 'none';
 				}
 			}
 					
-            // 添加单词点击事件
             definitionDiv.querySelectorAll('.clickable-word').forEach(span => {
                 span.addEventListener('click', function() {
 					const plusDiv = definitionDiv.querySelector('.plus');
@@ -335,7 +330,6 @@ function loadWord(word, wordListDiv) {
 				});
             });
 
-            // 添加按钮的事件
             definitionDiv.querySelector('.delete-btn').addEventListener('click', function() {
 				removeCategory();
 				updateModified(word, def, explainDiv);
@@ -346,26 +340,9 @@ function loadWord(word, wordListDiv) {
 				memItems[word][def] = '_select';
 				updateModified(word, def, explainDiv);
             });
-
-            definitionDiv.querySelector('.base-btn').addEventListener('click', function() {
-				removeCategory();
-                memItems[word][def] = '_base'; // 设置为 base
-				updateModified(word, def, explainDiv);
-            });
 			
 			definitionDiv.querySelector('.attr-btn').addEventListener('click', function() {
-				const newWord = prompt("请输入属性词：");
-				if (Object.values(memItems[newWord]).some(value => value.startsWith('_'))){
-					removeCategory();
-					memItems[word][def] = '_attr: ' + newWord;
-					updateModified(word, def, explainDiv);
-				} else {
-					alert("该词不是基词");
-				}
-            });
-
-            definitionDiv.querySelector('.category-btn').addEventListener('click', function() {
-                removeCategory();
+				removeCategory();
 				updateModified(word, def, explainDiv);
 				document.getElementById(`${word}-${def}-category`).style.display = 'inline';
             });
@@ -408,7 +385,8 @@ function loadWords() {
 function initWord(word) {
 	function getItemStyle(word, def) {
 		if (!memItems[word]) return 'lightcoral';
-		if (memItems[word][def] && memItems[word][def].startsWith('_')) return 'lightgreen';
+		if (memItems[word][def] && memItems[word][def].startsWith('_attr')) return 'lightgreen';
+		if (memItems[word][def] && memItems[word][def].startsWith('_')) return 'lightblue';
 		return Object.keys(memItems[word]).length > 1 ? '#FFFF00' : 'transparent';
 	}
 	const definitions = memItems[word] ? Object.keys(memItems[word])[0] : null;
@@ -454,7 +432,8 @@ const initExplanation = (word, def, depth = -1) => {
                         }
                     });
                 } else {
-                    result[depth].push({ word: word, style: "lightgreen", def: def })
+					const style = key[0].startsWith('_attr') ? "lightgreen" : "lightblue";
+                    result[depth].push({ word: word, style: style, def: def })
                 }
             } else {
                 result[depth].push({ word: word, style: "lightcoral" })
@@ -588,6 +567,58 @@ function modifyExplain(word, def, layerNum, itemIndex, move = 0, newDef = null) 
 }
 
 window.onload = function() {
+
+	function initCategories() {
+		const baseWords = [['root', 'science'], ['root', 'society']];
+		
+		for (const [word, wordData] of Object.entries(memItems)) {
+			if (wordData && typeof wordData === 'object') {
+				const found = Object.values(wordData).some(value => {
+					if (value.startsWith('_attr: ')) {
+						const segments = value.slice('_attr: '.length).split('-');
+						baseWords.push([segments[segments.length - 1], word]);
+						return true;
+					}
+					return false;
+				});
+			}
+		}
+		
+		const tree = {}; // 用于存储根节点的对象
+		const map = new Map(); // 用于跟踪每个节点的子节点
+
+		// 创建所有节点的映射关系
+		for (const [parent, child] of baseWords) {
+			if (!map.has(parent)) {
+				map.set(parent, {});
+			}
+			if (!map.has(child)) {
+				map.set(child, {});
+			}
+			// 将child作为parent的子节点
+			map.get(parent)[child] = map.get(child);
+		}
+
+		// 获取根节点，假设第一个元素的父节点为根节点
+		const root = baseWords[0][0]; // 这里假设根节点是第一个parent
+
+		// 将映射关系构建为树
+		function build(parent) {
+			const children = map.get(parent);
+			if (children) {
+				for (const child in children) {
+					// 递归构建
+					children[child] = build(child);
+				}
+			}
+			return children || {}; // 返回子树
+		}
+
+		// 将根节点的子节点构建为树
+		tree[root] = build(root);
+
+		return tree['root'];
+	}
 	
 	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
 	//localStorage.setItem('savedWords', JSON.stringify({}));
@@ -596,37 +627,32 @@ window.onload = function() {
 		Object.assign(newStoredData, memItems);
 		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
 	}, 20000);
+	categories = initCategories();
+	console.log(categories);
 	
 	document.getElementById('importJsonFile').value = '';
 	
 	const loadingMessage = document.createElement('div');
 	loadingMessage.id = 'loading-message';
 	loadingMessage.innerText = '正在加载...';
-	document.body.appendChild(loadingMessage); // 添加到页面底部
-
-	// 使用 Promise.all 来并行加载多个 JSON 文件
-    Promise.all([
-        fetch(proxy + 'https://r-intmax.github.io/data/dict.json'),
-        fetch(proxy + 'https://r-intmax.github.io/data/classification.json')
-		//fetch("http://localhost/dict.json"),
-		//fetch("http://localhost/classification.json")
-	])
-    .then(responses => {
-        // 检查每个响应是否成功
-        if (!responses[0].ok || !responses[1].ok) {
+	document.body.appendChild(loadingMessage);
+	
+	//fetch("http://localhost/dict.json")
+    fetch(proxy + 'https://r-intmax.github.io/data/dict.json')
+    .then(response => {
+        if (!response.ok) {
             throw new Error('网络响应不是 OK');
         }
-        return Promise.all(responses.map(response => response.json()));
+        return response.json();
     })
     .then(data => {
-        allWords = Object.entries(data[0]); // 第一个JSON对象
-        categories = data[1]; // 第二个JSON对象
+        allWords = Object.entries(data);
     })
-	.finally(() => {
-		const loadingMessage = document.getElementById('loading-message');
-		document.body.removeChild(loadingMessage);
-		loadWords();
-	});
+    .finally(() => {
+        const loadingMessage = document.getElementById('loading-message');
+        loadingMessage && document.body.removeChild(loadingMessage);
+        loadWords();
+    });
 };
 
 document.getElementById("nextPage").addEventListener("click", function() {
@@ -696,56 +722,6 @@ document.getElementById("importJson").addEventListener("click", function() {
     } else {
         alert("请先选择一个文件！");
     }
-});
-
-document.getElementById("showBaseWords").addEventListener("click", function() {
-	const savedWords = memItems || {};
-	const baseWords = [];
-	
-	// 遍历 savedWords
-	for (let [w, wordData] of Object.entries(savedWords)) {
-		if (wordData && typeof wordData === 'object') {  
-			for (const key in wordData) {
-				if (wordData.hasOwnProperty(key) && wordData[key] === '_base') {
-					const wordDataEntry = allWords.find(([word]) => w === word);
-					let color = 'transparent';
-					for (const [partOfSpeech, definitions] of Object.entries(wordDataEntry[1])) {
-						if (definitions.includes(Object.keys(wordData)[0]) && partOfSpeech === 'verb') {
-							color = 'pink';
-							break;
-						}
-					}
-					baseWords.push({word: w, color: color});
-					break;
-				} else if (wordData.hasOwnProperty(key) && wordData[key].startsWith('_category')){
-					baseWords.push({word: w, color: 'lightblue'});
-					break;
-				} else if (wordData.hasOwnProperty(key) && wordData[key].startsWith('_attr')){
-					baseWords.push({word: w, color: 'lightgreen'});
-					break;
-				}
-			}
-		}
-	}
-	
-	const wordList = document.createElement('div');
-	wordList.innerHTML = '<h2>基词表</h2>';
-	wordList.className = 'dialog';
-
-	baseWords.forEach(({word, color}) => {
-		const li = document.createElement('li');
-		li.textContent = word;
-		li.style.backgroundColor = color;
-		wordList.appendChild(li);
-	});
-	
-	wordList.innerHTML += '<button class="close-btn">关闭</button>';
-	
-	document.body.appendChild(wordList);
-
-	wordList.querySelector('.close-btn').addEventListener('click', () => {
-		wordList.remove();
-    });
 });
 
     </script>
