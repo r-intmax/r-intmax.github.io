@@ -188,14 +188,13 @@ function createCategorySelect(word, def, div, parentValueList = []) {
 			const nextLevelSelect = createCategorySelect(word, def, div, newParentValueList);
 			selectElement.after(nextLevelSelect);
 			combinedCategory = newParentValueList.join('-');
-			//currentCategories[selectElement.value] = {};
 		}
-	    
+		
 		if (!memItems[word][def].startsWith(combinedCategory)) {
 			memItems[word][def] = '_attr: root-' + combinedCategory;
 			updateModified(word, def, div);
+			categories = initCategories();
 		}
-		
     };
 
     return selectElement;
@@ -571,60 +570,59 @@ function modifyExplain(word, def, layerNum, itemIndex, move = 0, newDef = null) 
     }
 }
 
-window.onload = function() {
-
-	function initCategories() {
-		const baseWords = [['root', 'science'], ['root', 'society']];
-		
-		for (const [word, wordData] of Object.entries(memItems)) {
-			if (wordData && typeof wordData === 'object') {
-				const found = Object.values(wordData).some(value => {
-					if (value.startsWith('_attr: ')) {
-						const segments = value.slice('_attr: '.length).split('-');
-						baseWords.push([segments[segments.length - 1], word]);
-						return true;
-					}
-					return false;
-				});
-			}
-		}
-		
-		const tree = {}; // 用于存储根节点的对象
-		const map = new Map(); // 用于跟踪每个节点的子节点
-
-		// 创建所有节点的映射关系
-		for (const [parent, child] of baseWords) {
-			if (!map.has(parent)) {
-				map.set(parent, {});
-			}
-			if (!map.has(child)) {
-				map.set(child, {});
-			}
-			// 将child作为parent的子节点
-			map.get(parent)[child] = map.get(child);
-		}
-
-		// 获取根节点，假设第一个元素的父节点为根节点
-		const root = baseWords[0][0]; // 这里假设根节点是第一个parent
-
-		// 将映射关系构建为树
-		function build(parent) {
-			const children = map.get(parent);
-			if (children) {
-				for (const child in children) {
-					// 递归构建
-					children[child] = build(child);
+function initCategories() {
+	const baseWords = [['root', 'science'], ['root', 'society']];
+	
+	for (const [word, wordData] of Object.entries(memItems)) {
+		if (wordData && typeof wordData === 'object') {
+			const found = Object.values(wordData).some(value => {
+				if (value.startsWith('_attr: ')) {
+					const segments = value.slice('_attr: '.length).split('-');
+					baseWords.push([segments[segments.length - 1], word]);
+					return true;
 				}
-			}
-			return children || {}; // 返回子树
+				return false;
+			});
 		}
-
-		// 将根节点的子节点构建为树
-		tree[root] = build(root);
-
-		return tree['root'];
 	}
 	
+	const tree = {}; // 用于存储根节点的对象
+	const map = new Map(); // 用于跟踪每个节点的子节点
+
+	// 创建所有节点的映射关系
+	for (const [parent, child] of baseWords) {
+		if (!map.has(parent)) {
+			map.set(parent, {});
+		}
+		if (!map.has(child)) {
+			map.set(child, {});
+		}
+		// 将child作为parent的子节点
+		map.get(parent)[child] = map.get(child);
+	}
+
+	// 获取根节点，假设第一个元素的父节点为根节点
+	const root = baseWords[0][0]; // 这里假设根节点是第一个parent
+
+	// 将映射关系构建为树
+	function build(parent) {
+		const children = map.get(parent);
+		if (children) {
+			for (const child in children) {
+				// 递归构建
+				children[child] = build(child);
+			}
+		}
+		return children || {}; // 返回子树
+	}
+
+	// 将根节点的子节点构建为树
+	tree[root] = build(root);
+
+	return tree['root'];
+}
+
+window.onload = function() {
 	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
 	//localStorage.setItem('savedWords', JSON.stringify({}));
 	setInterval(() => {
@@ -641,8 +639,8 @@ window.onload = function() {
 	loadingMessage.innerText = '正在加载...';
 	document.body.appendChild(loadingMessage);
 	
-	//fetch("http://localhost/dict.json")
-    fetch(proxy + 'https://r-intmax.github.io/data/dict.json')
+	fetch("http://localhost/dict.json")
+    //fetch(proxy + 'https://r-intmax.github.io/data/dict.json')
     .then(response => {
         if (!response.ok) {
             throw new Error('网络响应不是 OK');
