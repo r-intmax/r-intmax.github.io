@@ -105,6 +105,8 @@ function initword(word, div){
 	
 	if (!memItems[word]) memItems[word] = '';
 	
+	div.querySelector('.select').innerHTML = memItems[word];
+	
 	const update = (text) => {
 		memItems[word] = text;
 		div.querySelector('.select').innerHTML = memItems[word];
@@ -161,12 +163,12 @@ function loadWords() {
 }
 
 window.onload = function() {
-	memItems = JSON.parse(localStorage.getItem('savedvWords')) || {};
+	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
 	localStorage.setItem('savedWords', JSON.stringify({}));
 	setInterval(() => {
-		const newStoredData = JSON.parse(localStorage.getItem('savedvWords')) || {};
+		const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
 		Object.assign(newStoredData, memItems);
-		localStorage.setItem('savedvWords', JSON.stringify(newStoredData));
+		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
 	}, 20000);
 	
 	const loadingMessage = document.createElement('div');
