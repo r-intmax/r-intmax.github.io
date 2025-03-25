@@ -9,10 +9,23 @@ body {
 	font-family: Arial, sans-serif;
 	margin: 20px;
 }
+.dialog {
+    position: fixed;
+    top: 20px;
+    left: 5px;
+    width: 96%; /* 可根据需要调整 */
+    max-height: 95vh; /* 最大高度为视口的80% */
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* 隐藏部分溢出内容 */
+	overflow-y: auto; /* 启用垂直方向滚动条 */
+}
 </style>
 </head>
 <body>
 <h2>动词筛选</h2>
+<button id="show">展示</button>
 <button id="exportJson">导出</button>
 <button id="importJson" style="color: red;">导入</button>
 <input type="file" id="importJsonFile" accept=".json" /><br>
@@ -163,7 +176,7 @@ function loadWords() {
 }
 
 window.onload = function() {
-	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
+	memItems = JSON.parse(localStorage.getItem('savedvWords')) || {};
 	localStorage.setItem('savedvWords', JSON.stringify({}));
 	setInterval(() => {
 		const newStoredData = JSON.parse(localStorage.getItem('savedvWords')) || {};
@@ -262,6 +275,40 @@ document.getElementById("importJson").addEventListener("click", function() {
         alert("请先选择一个文件！");
     }
 });
+
+document.getElementById("show").addEventListener("click", function() {
+	const uniqueText = new Set();
+    for (var key in memItems) {
+        if (memItems.hasOwnProperty(key)) {
+            const value = memItems[key].split(" ")[0];
+            if (value) {
+                uniqueText.add(value);
+            }
+        }
+    }
+
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+
+    const list = document.createElement('ul');
+    uniqueText.forEach(function(text) {
+        const listItem = document.createElement('li');
+        listItem.textContent = text;
+        list.appendChild(listItem);
+    });
+    
+    dialog.appendChild(list);
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '关闭';
+    closeButton.addEventListener('click', function() {
+        document.body.removeChild(dialog);
+    });
+
+    dialog.appendChild(closeButton);
+    document.body.appendChild(dialog);
+});
+
 
 </script>
 </body>
