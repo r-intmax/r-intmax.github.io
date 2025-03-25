@@ -164,11 +164,11 @@ function loadWords() {
 
 window.onload = function() {
 	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
-	localStorage.setItem('savedWords', JSON.stringify({}));
+	localStorage.setItem('savedvWords', JSON.stringify({}));
 	setInterval(() => {
-		const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
+		const newStoredData = JSON.parse(localStorage.getItem('savedvWords')) || {};
 		Object.assign(newStoredData, memItems);
-		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
+		localStorage.setItem('savedvWords', JSON.stringify(newStoredData));
 	}, 20000);
 	
 	const loadingMessage = document.createElement('div');
