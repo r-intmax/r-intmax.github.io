@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动词筛选</title>
+<style>
+body {
+	font-family: Arial, sans-serif;
+	margin: 20px;
+}
+</style>
+</head>
+<body>
+<h2>动词筛选</h2>
+<button id="exportJson">导出</button>
+<button id="importJson" style="color: red;">导入</button>
+<input type="file" id="importJsonFile" accept=".json" /><br>
+<label for="startIndex">页码</label>
+<input type="text" id="startIndex">
+<button id="jump">跳转</button><br>
+<div id="currentPage"></div><br>
+<div id="progressRatio"></div><br>
+<div id="wordList"></div>
+<button id="nextPage">下一页</button>
+<script>
+const proxy = 'https://missaoempreendedora.com/wp-content/plugins/super-links/application/helpers/super-links-proxy.php?';
+let allWords = [];
+var memItems = {};
+let currentPageIndex = 0; // 当前页面索引
+let lastPageIndex = currentPageIndex;
+
+document.getElementById("jump").addEventListener("click", function() {
+    // 获取输入的值
+    const inputValue = document.getElementById("startIndex").value;
+    let startIndex;
+
+    // 检查输入是否为数字，且大于0
+    if (!isNaN(inputValue) && inputValue.trim() !== '') {
+        startIndex = parseInt(inputValue, 10);
+        if (startIndex > 0) {
+            currentPageIndex = startIndex - 1; // 页码转换为索引
+        } else {
+            return; // 如果输入的值小于1，直接返回
+        }
+    } else {
+    function levenshtein(a, b) {
+        const matrix = [];
+
+        // 初始化矩阵
+        for (let i = 0; i <= b.length; i++) {
+            matrix[i] = [i];
+        }
+        for (let j = 0; j <= a.length; j++) {
+            matrix[0][j] = j;
+        }
+
+        // 填充矩阵
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1]; // 字符相同
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1, // 替换
+                        matrix[i][j - 1] + 1,     // 插入
+                        matrix[i - 1][j] + 1      // 删除
+                    );
+                }
+            }
+        }
+
+        return matrix[b.length][a.length];
+    }
+
+    const searchWord = inputValue.trim();
+    let closestWord = null;
+    let minDistance = Infinity;
+
+    for (const [word] of allWords) {
+        // 确保字典单词以输入词作为前缀
+        if (word.startsWith(searchWord)) {
+            closestWord = word; // 直接匹配
+            break; // 找到第一个匹配的单词后即可停止查找
+        }
+    }
+
+    if (closestWord) {
+        // 计算该单词的页码
+        const index = allWords.findIndex(([word]) => word === closestWord);
+        currentPageIndex = Math.floor(index / 8); // 计算该单词的页码
+    } else {
+        alert('未找到匹配的字符串');
+        return;
+    }
+}
+
+    loadWords(); // 加载词汇
+});
+
+function initword(word, div){
+	div.innerHTML += `<label class="delete-btn"><input type="radio" name="${word}-options" value="delete" checked />删除</label>
+	<label class="func-btn"><input type="radio" name="${word}-options" value="func" />指代</label><br><br>
+	<div class='select'></div><br><br>`;
+	
+	if (!memItems[word]) memItems[word] = '';
+	
+	const update = (text) => {
+		memItems[word] = text;
+		div.querySelector('.select').innerHTML = memItems[word];
+	};
+
+	div.querySelector('.delete-btn').addEventListener('click', function() {
+		update('');
+	});
+
+	div.querySelector('.func-btn').addEventListener('click', function() {
+		text = prompt('请输入指代词');
+		update(text);
+	});
+}
+
+function loadWord(word, wordListDiv) {
+    const wordDataEntry = allWords.find(([w]) => w === word);
+    if (!wordDataEntry) return;
+
+    const meanings = wordDataEntry[1]; 
+    const wordItem = document.createElement("div");
+    wordItem.className = "word-item";
+    wordItem.innerHTML = `<strong>${word}</strong><br>`;
+
+    meanings.forEach(def => {
+        const definitionDiv = document.createElement('div');
+        definitionDiv.innerHTML = `- ${def}<br>`;
+        wordItem.appendChild(definitionDiv);
+    });
+
+    initword(word, wordItem);
+    wordListDiv.appendChild(wordItem);
+}
+
+function loadWords() {
+	const article = 8;
+    const startIndex = currentPageIndex * article;
+    const wordListDiv = document.getElementById("wordList");
+    const currentPageDiv = document.getElementById("currentPage");
+    wordListDiv.innerHTML = '';
+	
+    const wordsToDisplay = allWords.slice(startIndex, startIndex + article);
+    wordsToDisplay.forEach(([word]) => {
+        loadWord(word, wordListDiv);
+    });
+
+    currentPageDiv.innerHTML = `这是第 ${currentPageIndex + 1} 页`;
+	
+	const totalWords = allWords.length; 
+	const savedWordsCount = Object.keys(memItems).length; 
+	const progressRatio = totalWords > 0 ? (savedWordsCount / totalWords) : 0;
+    const progressText = (progressRatio * 100).toFixed(2) + '%';
+    document.getElementById('progressRatio').innerText = '进度: ' + progressText;
+}
+
+window.onload = function() {
+	memItems = JSON.parse(localStorage.getItem('savedWords')) || {};
+	localStorage.setItem('savedWords', JSON.stringify({}));
+	setInterval(() => {
+		const newStoredData = JSON.parse(localStorage.getItem('savedWords')) || {};
+		Object.assign(newStoredData, memItems);
+		localStorage.setItem('savedWords', JSON.stringify(newStoredData));
+	}, 20000);
+	
+	const loadingMessage = document.createElement('div');
+	loadingMessage.id = 'loading-message';
+	loadingMessage.innerText = '正在加载...';
+	document.body.appendChild(loadingMessage);
+	
+    fetch(proxy + 'https://r-intmax.github.io/data/verbs.json')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('网络响应不是 OK');
+        }
+        return response.json();
+    })
+    .then(data => {
+        allWords = Object.entries(data);
+    })
+    .finally(() => {
+        const loadingMessage = document.getElementById('loading-message');
+        loadingMessage && document.body.removeChild(loadingMessage);
+        loadWords();
+    });
+};
+
+document.getElementById("nextPage").addEventListener("click", function() {
+    currentPageIndex++;
+    loadWords();
+	window.scrollTo({ top: 0 });
+	document.getElementById('importJsonFile').value = '';
+});
+
+document.getElementById("exportJson").addEventListener("click", function() {
+    const savedData = memItems;
+    if (savedData) {
+        const parsedData = savedData;
+        
+        // 过滤掉值为空的词汇
+        const filteredData = Object.fromEntries(
+            Object.entries(parsedData).filter(([word, meanings]) => {
+                return Object.keys(meanings).length > 0; // 只保留非空对象
+            })
+        );
+
+		function getFormattedDate() {
+			const date = new Date();
+			const year = date.getFullYear();
+			const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始
+			const day = String(date.getDate()).padStart(2, '0');
+			const hours = String(date.getHours()).padStart(2, '0');
+			const minutes = String(date.getMinutes()).padStart(2, '0');
+			const seconds = String(date.getSeconds()).padStart(2, '0');
+
+			return `${year}${month}${day}${hours}${minutes}${seconds}`;
+		}
+
+		const filename = `output_${getFormattedDate()}.json`;
+
+        const beautifiedJson = JSON.stringify(filteredData, null, 4);
+        const blob = new Blob([beautifiedJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url); // 释放内存
+    } else {
+        alert("没有可导出的数据！");
+    }
+});
+
+document.getElementById("importJson").addEventListener("click", function() {
+    const fileInput = document.getElementById("importJsonFile");
+    const file = fileInput.files[0];
+
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            try {
+                const data = JSON.parse(event.target.result);
+				memItems = data;
+				alert("导入成功！");
+				loadWords();
+            } catch (error) {
+                alert("无效的 JSON 文件！");
+            }
+        };
+
+        reader.readAsText(file);
+    } else {
+        alert("请先选择一个文件！");
+    }
+});
+
+</script>
+</body>
+</html>
